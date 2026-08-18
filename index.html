@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Oráculo · Pantalla falsa</title>
 <style>
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none;}
@@ -13,8 +16,7 @@
     overflow:hidden;
   }
   #app{
-    position:relative;
-    width:100vw; height:100dvh;
+    position:fixed; top:0; left:0; right:0; bottom:0;
     overflow:hidden;
     background: linear-gradient(160deg,#1c1c3a 0%, #0d0d20 55%, #000 100%);
   }
@@ -118,14 +120,14 @@
     transform: translateX(100%);
     transition: transform 0.32s ease;
     font-family: -apple-system, 'SF Pro Text', Helvetica, Arial, sans-serif;
-    --n-bg:#ffffff; --n-bar:#f7f6f3; --n-text:#1c1c1e; --n-sub:#8e8e93;
-    --n-border:#dedad2; --n-accent:#ffcc00; --n-icon:#c9a227;
+    --n-bg:#ffffff; --n-groupbg:#f2f1f6; --n-bar:#f7f6fa; --n-text:#1c1c1e; --n-sub:#8e8e93;
+    --n-border:#e2e0e6; --n-accent:#c9970a; --n-icon:#d5a021; --n-icon-dis:#c7c7cc;
   }
   .notes-list-screen{ z-index:35; }
   .notes-screen{ z-index:40; }
   .notes-screen.dark, .notes-list-screen.dark{
-    --n-bg:#000000; --n-bar:#1c1c1e; --n-text:#f2f2f2; --n-sub:#8e8e93;
-    --n-border:#2c2c2e; --n-accent:#ffd60a; --n-icon:#ffd60a;
+    --n-bg:#1c1c1e; --n-groupbg:#000000; --n-bar:#000000; --n-text:#f2f2f2; --n-sub:#8e8e93;
+    --n-border:#38383a; --n-accent:#ffd60a; --n-icon:#ffd60a; --n-icon-dis:#48484a;
   }
   .notes-screen.open, .notes-list-screen.open{ transform: translateX(0); }
 
@@ -139,75 +141,107 @@
   .n-navbar{
     height:44px; background:var(--n-bar);
     display:flex; align-items:center; justify-content:space-between;
-    padding:0 8px; border-bottom:1px solid var(--n-border);
+    padding:0 14px;
   }
   .n-back{
-    color:var(--n-accent); font-size:16px; display:flex; align-items:center; gap:2px;
-    padding:6px 8px;
+    color:var(--n-accent); font-size:17px; display:flex; align-items:center; gap:1px;
   }
-  .n-navicons{ display:flex; gap:18px; padding-right:6px; color:var(--n-accent); font-size:16px; }
+  .n-navicons{ display:flex; align-items:center; gap:20px; color:var(--n-accent); font-size:16px; }
+  .n-navicons span.disabled{ color:var(--n-icon-dis); }
+  .n-ok-btn{ color:var(--n-accent); font-size:17px; font-weight:600; display:none; }
 
   .n-body{
     flex:1; overflow-y:auto;
     background: var(--n-bg);
-    padding: 14px 18px 30px;
-  }
-  .n-title{
-    color:var(--n-text); font-size:25px; font-weight:700;
-    margin: 2px 0 2px; line-height:1.2;
+    padding: 4px 18px 30px;
   }
   .n-meta{
-    font-size:13px; color:var(--n-sub); margin-bottom:16px;
+    font-size:13px; color:var(--n-sub); text-align:center; margin: 2px 0 6px;
   }
+  .n-title{
+    color:var(--n-text); font-size:30px; font-weight:700;
+    margin: 4px 0 6px; line-height:1.15;
+    outline:none;
+  }
+  .n-content-body{ outline:none; }
   .n-line{
     display:flex; align-items:baseline; gap:6px;
-    font-size:16.5px; line-height:1.65; color:var(--n-text);
+    font-size:17px; line-height:1.6; color:var(--n-text);
     padding: 1px 0;
   }
   .n-line .n-num{
-    color:var(--n-text); min-width:24px; text-align:right; flex-shrink:0;
+    color:var(--n-text); min-width:22px; text-align:right; flex-shrink:0;
   }
   .n-line .n-txt{ flex:1; }
-  .n-line.target .n-num, .n-line.target .n-txt{ color:var(--n-icon); font-weight:700; }
   .n-line-plain{
-    white-space:pre-wrap; font-size:16.5px; line-height:1.55; color:var(--n-text);
+    white-space:pre-wrap; font-size:17px; line-height:1.55; color:var(--n-text);
+    outline:none; min-height:200px;
   }
 
   .n-bottombar{
-    height:48px; background:var(--n-bar);
-    border-top:1px solid var(--n-border);
+    height:46px; background:var(--n-bar);
+    border-top:0.5px solid var(--n-border);
     display:flex; align-items:center; justify-content:space-around;
-    color:var(--n-icon); font-size:17px;
+    color:var(--n-icon); font-size:18px;
     flex-shrink:0;
   }
 
-  /* ---- Vista de lista de Notas ---- */
+  .n-title[contenteditable], .n-content-body[contenteditable], .n-line-plain[contenteditable]{
+    -webkit-user-select:text; user-select:text; -webkit-touch-callout:default;
+  }
+
+
+  .notes-list-screen{ background:var(--n-groupbg); }
   .n-list-title{
-    color:var(--n-text); font-size:32px; font-weight:800;
-    padding: 10px 18px 6px;
-    background:var(--n-bg);
+    color:var(--n-text); font-size:34px; font-weight:800;
+    padding: 6px 18px 8px;
   }
   .n-search{
-    margin: 4px 18px 10px;
+    margin: 2px 18px 14px;
     background: var(--n-border);
     border-radius:10px;
     padding:8px 12px;
     color:var(--n-sub);
-    font-size:14px;
+    font-size:15px;
+    display:flex; align-items:center; gap:6px;
   }
   .n-list-body{
-    flex:1; overflow-y:auto; background:var(--n-bg);
+    flex:1; overflow-y:auto; background:var(--n-groupbg);
+    padding: 0 14px;
+  }
+  .n-section-title{
+    color:var(--n-text); font-size:22px; font-weight:700;
+    margin: 14px 4px 8px;
+  }
+  .n-card{
+    background: var(--n-bg);
+    border-radius:14px;
+    overflow:hidden;
+    margin-bottom: 10px;
   }
   .n-row{
-    padding: 10px 18px;
-    border-bottom:1px solid var(--n-border);
+    padding: 8px 14px 10px;
+    border-bottom: 0.5px solid var(--n-border);
   }
-  .n-row-title{ color:var(--n-text); font-size:16.5px; font-weight:600; margin-bottom:2px; }
+  .n-row:last-child{ border-bottom:none; }
+  .n-row-title{ color:var(--n-text); font-size:17px; font-weight:600; margin-bottom:1px; }
   .n-row-sub{
-    color:var(--n-sub); font-size:14px;
+    color:var(--n-sub); font-size:15px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
   .n-row-sub .n-row-date{ color:var(--n-sub); }
+
+  .n-list-footer{
+    height:44px; flex-shrink:0;
+    background:var(--n-groupbg);
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .n-list-footer .n-count{ color:var(--n-sub); font-size:13px; }
+  .n-list-footer .n-compose{
+    position:absolute; right:18px;
+    color:var(--n-accent); font-size:22px;
+  }
 
   /* ---- Config oculta ---- */
   .config-overlay{
@@ -253,12 +287,14 @@
   }
   .shot-thumb.filled{ border-style:solid; border-color:#7a1f2b; color:transparent; }
   #calibrateWrap p{ font-size:11px; color:#666; margin:8px 0; }
-  #calibrateImgWrap{ position:relative; width:100%; border-radius:8px; overflow:hidden; }
+  #calibrateImgWrap{ position:relative; width:100%; border-radius:8px; overflow:hidden; cursor:crosshair; }
   #calibrateImg{ width:100%; display:block; }
-  #calibrateMarker{
-    position:absolute; width:18px; height:18px; border-radius:50%;
+  .cal-marker{
+    position:absolute; width:22px; height:22px; border-radius:50%;
     background:rgba(255,60,60,0.85); border:2px solid #fff;
-    display:none; transform:translate(-50%,-50%); pointer-events:none;
+    transform:translate(-50%,-50%); pointer-events:none;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:11px; font-weight:bold;
   }
 
   .note-manager-row{
@@ -315,11 +351,15 @@
     </div>
     <div class="n-navbar">
       <div class="n-back" id="notesListBack">‹ Carpetas</div>
-      <div class="n-navicons"><span>✎</span></div>
+      <div class="n-navicons"><span>⋯</span></div>
     </div>
     <div class="n-list-title">Notas</div>
     <div class="n-search">🔍 Buscar</div>
     <div class="n-list-body" id="notesListBody"></div>
+    <div class="n-list-footer">
+      <span class="n-count" id="notesCount"></span>
+      <span class="n-compose">🖉</span>
+    </div>
   </div>
 
   <div class="notes-screen" id="notesScreen">
@@ -329,15 +369,18 @@
     </div>
     <div class="n-navbar">
       <div class="n-back" id="notesBack">‹ Notas</div>
-      <div class="n-navicons"><span>⤴</span><span>◌</span><span>✎</span></div>
+      <div class="n-navicons">
+        <span class="disabled">↶</span><span class="disabled">↷</span><span>⬆</span><span>⋯</span>
+      </div>
+      <div class="n-ok-btn" id="notesOkBtn">OK</div>
     </div>
     <div class="n-body">
-      <div class="n-title" id="notesTitle">Lista</div>
       <div class="n-meta" id="notesDate"></div>
-      <div id="notesList"></div>
+      <div class="n-title" id="notesTitle" contenteditable="true">Lista</div>
+      <div id="notesList" class="n-content-body" contenteditable="true"></div>
     </div>
     <div class="n-bottombar">
-      <span>☐</span><span>▦</span><span>✎</span><span>📷</span><span>⤴</span>
+      <span>☑</span><span>📎</span><span>Ⓐ</span><span>🌀</span><span>🖉</span>
     </div>
   </div>
 </div>
@@ -350,7 +393,8 @@
     <label>Modo de forzaje</label>
     <select id="forceModeSelect">
       <option value="single">Sencillo — 1 espectador, 1 número</option>
-      <option value="double">Doble — 2 espectadores, 2 números</option>
+      <option value="double">Doble — 2 espectadores, 2 notas</option>
+      <option value="double-same">Doble en la misma nota — 2 espectadores, misma lista</option>
     </select>
 
     <div id="singleForceFields">
@@ -408,6 +452,28 @@
       </div>
     </div>
 
+    <div id="doubleSameForceFields" style="display:none;">
+      <div style="border:1px solid #eee; border-radius:8px; padding:10px; margin-top:14px;">
+        <p style="margin:0 0 6px; font-size:11px; color:#666;">Los dos espectadores dicen su número (swipes 1-2 y 3-4) y ambas palabras se colocan en <strong>una sola nota</strong>, de la misma lista.</p>
+        <label style="margin-top:0;">Elemento forzado A (posición del 1er número)</label>
+        <input type="text" id="forcedItemSameA" placeholder="Ej: Rey de Corazones">
+        <label>Elemento forzado B (posición del 2º número)</label>
+        <input type="text" id="forcedItemSameB" placeholder="Ej: As de Picas">
+        <div class="config-row" style="margin-top:10px;">
+          <div style="flex:1;">
+            <label style="margin-top:0;">Título de la nota</label>
+            <input type="text" id="forcedNoteTitleSame" placeholder="Lista">
+          </div>
+          <div style="flex:1;">
+            <label style="margin-top:0;">Fecha a mostrar</label>
+            <input type="text" id="forcedNoteDateSame" placeholder="Hoy">
+          </div>
+        </div>
+        <label>Lista de relleno</label>
+        <select id="listSelectSame"></select>
+      </div>
+    </div>
+
     <label style="margin-top:18px;">Mis listas guardadas</label>
     <div id="customListsManager"></div>
     <button class="btn-secondary" id="newListBtn" style="width:100%; margin-top:6px;">+ Nueva lista</button>
@@ -442,21 +508,22 @@
     </div>
 
     <label>Capturas de tu iPhone (máximo realismo)</label>
-    <p style="margin:0 0 6px;" id="shotsHint">En modo sencillo hacen falta 3 capturas; en modo doble, 5.</p>
+    <p style="margin:0 0 6px;" id="shotsHint">En modo sencillo hacen falta 3 capturas; en modo doble y en doble-en-una-nota, 5 (cada modo guarda las suyas por separado).</p>
     <div class="shots-row" id="shotsRow">
-      <div class="shot-slot"><input type="file" accept="image/*" id="shotInput1" style="display:none"><div class="shot-thumb" id="shotThumb1">Pantalla 1</div></div>
-      <div class="shot-slot"><input type="file" accept="image/*" id="shotInput2" style="display:none"><div class="shot-thumb" id="shotThumb2">Pantalla 2</div></div>
-      <div class="shot-slot" id="shotSlot3"><input type="file" accept="image/*" id="shotInput3" style="display:none"><div class="shot-thumb" id="shotThumb3">Pantalla 3</div></div>
-      <div class="shot-slot" id="shotSlot4" style="display:none;"><input type="file" accept="image/*" id="shotInput4" style="display:none"><div class="shot-thumb" id="shotThumb4">Pantalla 4</div></div>
-      <div class="shot-slot" id="shotSlot5" style="display:none;"><input type="file" accept="image/*" id="shotInput5" style="display:none"><div class="shot-thumb" id="shotThumb5">Pantalla 5</div></div>
+      <div class="shot-slot"><input type="file" accept="image/*" id="shotInput1" style="display:none"><div class="shot-thumb" id="shotThumb1">Pantalla 1</div><button class="btn-secondary shot-cal-btn" id="shotCal1" style="display:none;width:100%;margin-top:4px;font-size:11px;padding:5px;">Calibrar</button></div>
+      <div class="shot-slot"><input type="file" accept="image/*" id="shotInput2" style="display:none"><div class="shot-thumb" id="shotThumb2">Pantalla 2</div><button class="btn-secondary shot-cal-btn" id="shotCal2" style="display:none;width:100%;margin-top:4px;font-size:11px;padding:5px;">Calibrar</button></div>
+      <div class="shot-slot" id="shotSlot3"><input type="file" accept="image/*" id="shotInput3" style="display:none"><div class="shot-thumb" id="shotThumb3">Pantalla 3</div><button class="btn-secondary shot-cal-btn" id="shotCal3" style="display:none;width:100%;margin-top:4px;font-size:11px;padding:5px;">Calibrar</button></div>
+      <div class="shot-slot" id="shotSlot4" style="display:none;"><input type="file" accept="image/*" id="shotInput4" style="display:none"><div class="shot-thumb" id="shotThumb4">Pantalla 4</div><button class="btn-secondary shot-cal-btn" id="shotCal4" style="display:none;width:100%;margin-top:4px;font-size:11px;padding:5px;">Calibrar</button></div>
+      <div class="shot-slot" id="shotSlot5" style="display:none;"><input type="file" accept="image/*" id="shotInput5" style="display:none"><div class="shot-thumb" id="shotThumb5">Pantalla 5</div><button class="btn-secondary shot-cal-btn" id="shotCal5" style="display:none;width:100%;margin-top:4px;font-size:11px;padding:5px;">Calibrar</button></div>
     </div>
 
     <div id="calibrateWrap" style="display:none;">
-      <p>Toca en la imagen el lugar exacto donde está el icono de Notas en esa pantalla.</p>
+      <p id="calibrateInstructions"></p>
       <div id="calibrateImgWrap">
         <img id="calibrateImg">
-        <div id="calibrateMarker"></div>
+        <div id="calibrateMarkersLayer"></div>
       </div>
+      <button class="btn-secondary" id="calibrateResetBtn" style="margin-top:8px; width:100%;">Reiniciar esta calibración</button>
     </div>
 
     <button class="btn-secondary" id="clearShotsBtn" style="margin-top:10px; width:100%;">Quitar capturas (volver a iconos genéricos)</button>
@@ -577,7 +644,7 @@ if(!window.storage){
   let notesPageIndex = 2;
 
   function buildHomeScreens(){
-    totalScreens = forceMode === 'double' ? 5 : 3;
+    totalScreens = (forceMode === 'double' || forceMode === 'double-same') ? 5 : 3;
     notesPageIndex = totalScreens - 1;
     digits = [];
     currentPage = 0;
@@ -629,7 +696,7 @@ if(!window.storage){
   let currentPage = 0;
   let digits = [];
   let practiceMode = false;
-  let forceMode = 'single'; // 'single' | 'double'
+  let forceMode = 'single'; // 'single' | 'double' | 'double-same'
   let forcedItemText = '';
   let selectedList = 'builtin:objetos';
   let forcedNoteTitle = 'Lista';
@@ -640,10 +707,27 @@ if(!window.storage){
   let forcedNoteTitleA = 'Lista A', forcedNoteTitleB = 'Lista B';
   let forcedNoteDateA = 'Hoy', forcedNoteDateB = 'Hoy';
   let forcedNoteOrderA = 0, forcedNoteOrderB = 1;
+  let forcedItemTextSameA = '', forcedItemTextSameB = '';
+  let selectedListSame = 'builtin:objetos';
+  let forcedNoteTitleSame = 'Lista', forcedNoteDateSame = 'Hoy';
+  let forcedNoteOrderSame = 0;
   let customLists = {}; // nombre -> array de items
-  let shotDataUrls = {1:null, 2:null, 3:null, 4:null, 5:null};
-  let notesHotspot = {x:0.5, y:0.5};
+  let shotSets = {
+    single: {1:null, 2:null, 3:null},
+    double: {1:null, 2:null, 3:null, 4:null, 5:null},
+    'double-same': {1:null, 2:null, 3:null, 4:null, 5:null}
+  };
+  let notesHotspots = { single:{x:0.5,y:0.5}, double:{x:0.5,y:0.5}, 'double-same':{x:0.5,y:0.5} };
+  let digitZones = { single:{}, double:{}, 'double-same':{} }; // digitZones[mode][screenIndex] = [{x,y} x10] | undefined
   let notesDarkMode = false;
+
+  function currentShots(){ return shotSets[forceMode]; }
+  function currentHotspot(){ return notesHotspots[forceMode]; }
+  function digitZonesFor(screenIndex){ return digitZones[forceMode][screenIndex]; }
+  function setDigitZonesFor(screenIndex, val){
+    if(val) digitZones[forceMode][screenIndex] = val;
+    else delete digitZones[forceMode][screenIndex];
+  }
   let decoyNotes = []; // {id, title, dateText, body, order}
 
   const BUILTIN_LABELS = {
@@ -696,6 +780,7 @@ if(!window.storage){
     selectedList = populateListSelect(document.getElementById('listSelect'), selectedList);
     selectedListA = populateListSelect(document.getElementById('listSelectA'), selectedListA);
     selectedListB = populateListSelect(document.getElementById('listSelectB'), selectedListB);
+    selectedListSame = populateListSelect(document.getElementById('listSelectSame'), selectedListSame);
   }
 
   function refreshCustomListsManager(){
@@ -725,11 +810,12 @@ if(!window.storage){
 
   async function deleteCustomList(name){
     delete customLists[name];
-    [selectedList, selectedListA, selectedListB].forEach((v,i)=>{
+    [selectedList, selectedListA, selectedListB, selectedListSame].forEach((v,i)=>{
       if(v === 'custom:' + name){
         if(i===0) selectedList = 'builtin:objetos';
         if(i===1) selectedListA = 'builtin:objetos';
         if(i===2) selectedListB = 'builtin:objetos';
+        if(i===3) selectedListSame = 'builtin:objetos';
       }
     });
     try{
@@ -773,6 +859,21 @@ if(!window.storage){
     return Math.min(9, Math.max(0, Math.floor(x / (w/10))));
   }
 
+  function digitFromTouch(screenIndex, x, y){
+    const zones = digitZonesFor(screenIndex);
+    if(zones && zones.length === 10){
+      const w = window.innerWidth, h = window.innerHeight;
+      let best = 0, bestDist = Infinity;
+      zones.forEach((p, idx)=>{
+        const dx = p.x*w - x, dy = p.y*h - y;
+        const d = dx*dx + dy*dy;
+        if(d < bestDist){ bestDist = d; best = idx; }
+      });
+      return best;
+    }
+    return zoneFromX(x);
+  }
+
   function vibrate(ms){
     if(navigator.vibrate){ try{ navigator.vibrate(ms); }catch(e){} }
   }
@@ -782,42 +883,55 @@ if(!window.storage){
   let startZone = null;
   const appEl = document.getElementById('app');
 
+  function updateReadout(){
+    if(practiceMode){
+      readout.textContent = 'Dígitos: ' + digits.map(d => (d===null || d===undefined) ? '–' : d).join(' · ');
+    }
+  }
+
   appEl.addEventListener('touchstart', (e)=>{
-    if(currentPage >= notesPageIndex) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
-    startZone = zoneFromX(startX);
+    // solo hace falta calcular una zona/dígito si el gesto puede acabar siendo un swipe hacia delante
+    startZone = (currentPage < notesPageIndex) ? digitFromTouch(currentPage + 1, startX, startY) : null;
     dragging = true;
     screensEl.style.transition = 'none';
   }, {passive:true});
 
   appEl.addEventListener('touchmove', (e)=>{
-    if(!dragging || currentPage >= notesPageIndex) return;
+    if(!dragging) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
     if(Math.abs(dy) > Math.abs(dx)) return; // scroll vertical, ignorar
+    let clampedDx = dx;
+    if(dx < 0 && currentPage >= notesPageIndex) clampedDx = 0; // no hay pantalla siguiente
+    if(dx > 0 && currentPage <= 0) clampedDx = 0; // no hay pantalla anterior
     const basePercent = -(currentPage * (100/totalScreens));
-    const dragPercent = (dx / window.innerWidth) * (100/totalScreens);
+    const dragPercent = (clampedDx / window.innerWidth) * (100/totalScreens);
     screensEl.style.transform = `translateX(${basePercent + dragPercent}%)`;
   }, {passive:true});
 
   appEl.addEventListener('touchend', (e)=>{
-    if(!dragging || currentPage >= notesPageIndex) return;
+    if(!dragging) return;
     dragging = false;
     screensEl.style.transition = 'transform 0.35s cubic-bezier(0.22,0.61,0.36,1)';
     const endX = e.changedTouches[0].clientX;
     const dx = endX - startX;
 
-    if(dx < -60){
-      // swipe válido hacia la izquierda: usar el dígito capturado al empezar el gesto
+    if(dx < -60 && currentPage < notesPageIndex){
+      // swipe hacia delante: usar el dígito capturado al empezar el gesto
       digits[currentPage] = startZone;
       vibrate(15);
-      if(practiceMode){
-        readout.textContent = 'Dígitos: ' + digits.map(d => d ?? '–').join(' · ');
-      }
+      updateReadout();
       goToPage(currentPage + 1);
+    } else if(dx > 60 && currentPage > 0){
+      // swipe hacia atrás: "olvida" el dígito de la pantalla anterior para poder repetirlo
+      digits[currentPage - 1] = null;
+      vibrate(10);
+      updateReadout();
+      goToPage(currentPage - 1);
     } else {
-      goToPage(currentPage); // volver a la posición
+      goToPage(currentPage); // gesto insuficiente: volver a la posición actual
     }
   });
 
@@ -860,37 +974,89 @@ if(!window.storage){
   }
 
   function openForcedNote(which){
+    if(which === 'same'){ openForcedNoteSame(); return; }
     const cfg = forcedNoteConfig(which);
     const n = getComputedNumber(cfg.pairIndex) || 1;
     let fillers = [];
-    while(fillers.length < 99) fillers = fillers.concat(shuffle(cfg.pool));
+    while(fillers.length < 99) fillers = fillers.concat(cfg.pool);
     fillers = fillers.slice(0,99);
 
     const listEl = document.getElementById('notesList');
+    listEl.className = 'n-content-body';
     listEl.innerHTML = '';
-    let wordCount = 0;
     let fi = 0;
     for(let i=1;i<=100;i++){
       const text = i===n ? (cfg.itemText || '(elemento forzado)') : fillers[fi++];
-      wordCount += text.split(/\s+/).filter(Boolean).length;
       const line = document.createElement('div');
-      line.className = 'n-line' + (i===n ? ' target' : '');
+      line.className = 'n-line';
       line.innerHTML = `<span class="n-num">${i}.</span><span class="n-txt">${text}</span>`;
       listEl.appendChild(line);
     }
-    renderNoteFrame(cfg.title, `${cfg.date} · ${wordCount} palabras`);
+    renderNoteFrame(cfg.title, cfg.date);
+  }
+
+  function openForcedNoteSame(){
+    const pool = currentPool(selectedListSame);
+    const n1 = getComputedNumber(0) || 1;
+    const n2 = getComputedNumber(1) || 1;
+    let fillers = [];
+    while(fillers.length < 100) fillers = fillers.concat(pool);
+    fillers = fillers.slice(0,100);
+
+    const listEl = document.getElementById('notesList');
+    listEl.className = 'n-content-body';
+    listEl.innerHTML = '';
+    let fi = 0;
+    for(let i=1;i<=100;i++){
+      let text;
+      if(i === n1) text = forcedItemTextSameA || '(elemento A)';
+      else if(i === n2) text = forcedItemTextSameB || '(elemento B)';
+      else text = fillers[fi++];
+      const line = document.createElement('div');
+      line.className = 'n-line';
+      line.innerHTML = `<span class="n-num">${i}.</span><span class="n-txt">${text}</span>`;
+      listEl.appendChild(line);
+    }
+    renderNoteFrame(forcedNoteTitleSame || 'Lista', forcedNoteDateSame || 'Hoy');
   }
 
   function openDecoyNote(note){
     const listEl = document.getElementById('notesList');
-    const wordCount = note.body.split(/\s+/).filter(Boolean).length;
-    listEl.innerHTML = `<div class="n-line-plain"></div>`;
-    listEl.firstChild.textContent = note.body;
-    renderNoteFrame(note.title, `${note.dateText || 'Hoy'} · ${wordCount} palabras`);
+    listEl.className = 'n-line-plain';
+    listEl.textContent = note.body;
+    renderNoteFrame(note.title, note.dateText || 'Hoy');
   }
 
   document.getElementById('notesBack').addEventListener('click', ()=>{
+    document.getElementById('notesTitle').blur();
+    document.getElementById('notesList').blur();
     document.getElementById('notesScreen').classList.remove('open');
+  });
+
+  // Edición real: al enfocar el título o el cuerpo, aparece el teclado auténtico
+  // del iPhone y cambiamos la barra de navegación a modo edición (botón OK).
+  const notesNavIcons = document.querySelector('#notesScreen .n-navicons');
+  const notesOkBtn = document.getElementById('notesOkBtn');
+  function enterEditMode(){
+    notesNavIcons.style.display = 'none';
+    notesOkBtn.style.display = 'block';
+  }
+  function exitEditMode(){
+    notesNavIcons.style.display = 'flex';
+    notesOkBtn.style.display = 'none';
+  }
+  document.getElementById('notesTitle').addEventListener('focus', enterEditMode);
+  document.getElementById('notesList').addEventListener('focus', enterEditMode);
+  document.getElementById('notesTitle').addEventListener('blur', ()=>{
+    if(document.activeElement !== document.getElementById('notesList')) exitEditMode();
+  });
+  document.getElementById('notesList').addEventListener('blur', ()=>{
+    if(document.activeElement !== document.getElementById('notesTitle')) exitEditMode();
+  });
+  notesOkBtn.addEventListener('click', ()=>{
+    document.getElementById('notesTitle').blur();
+    document.getElementById('notesList').blur();
+    exitEditMode();
   });
 
   function allNotesSorted(){
@@ -899,6 +1065,10 @@ if(!window.storage){
       forcedEntries = [
         { isForced:true, which:'A', order: forcedNoteOrderA, title: forcedNoteTitleA || 'Lista A', dateText: forcedNoteDateA || 'Hoy', preview: '1. ' + (forcedItemTextA ? '…' : '(sin definir)') },
         { isForced:true, which:'B', order: forcedNoteOrderB, title: forcedNoteTitleB || 'Lista B', dateText: forcedNoteDateB || 'Hoy', preview: '1. ' + (forcedItemTextB ? '…' : '(sin definir)') }
+      ];
+    } else if(forceMode === 'double-same'){
+      forcedEntries = [
+        { isForced:true, which:'same', order: forcedNoteOrderSame, title: forcedNoteTitleSame || 'Lista', dateText: forcedNoteDateSame || 'Hoy', preview: '1. ' + ((forcedItemTextSameA || forcedItemTextSameB) ? '…' : '(sin definir)') }
       ];
     } else {
       forcedEntries = [
@@ -912,17 +1082,34 @@ if(!window.storage){
   function openNotesList(){
     const body = document.getElementById('notesListBody');
     body.innerHTML = '';
-    allNotesSorted().forEach(note=>{
+    const notes = allNotesSorted();
+
+    const section = document.createElement('div');
+    section.className = 'n-section-title';
+    section.textContent = 'Todas mis notas';
+    body.appendChild(section);
+
+    const card = document.createElement('div');
+    card.className = 'n-card';
+    notes.forEach(note=>{
       const row = document.createElement('div');
       row.className = 'n-row';
       const preview = note.isForced ? note.preview : (note.body || '').split('\n')[0];
       row.innerHTML = `<div class="n-row-title">${note.title}</div>
         <div class="n-row-sub"><span class="n-row-date">${note.dateText}</span>  ${preview}</div>`;
       row.addEventListener('click', ()=>{
-        if(note.isForced) openForcedNote(note.which); else openDecoyNote(note);
+        if(note.isForced){
+          if(note.which === 'same') openForcedNoteSame();
+          else openForcedNote(note.which);
+        } else {
+          openDecoyNote(note);
+        }
       });
-      body.appendChild(row);
+      card.appendChild(row);
     });
+    body.appendChild(card);
+
+    document.getElementById('notesCount').textContent = notes.length + (notes.length===1 ? ' nota' : ' notas');
     document.getElementById('notesListScreen').classList.toggle('dark', notesDarkMode);
     document.getElementById('notesListScreen').classList.add('open');
   }
@@ -936,12 +1123,16 @@ if(!window.storage){
   const forceModeSelect = document.getElementById('forceModeSelect');
   const singleForceFields = document.getElementById('singleForceFields');
   const doubleForceFields = document.getElementById('doubleForceFields');
+  const doubleSameForceFields = document.getElementById('doubleSameForceFields');
   const forcedItemInput = document.getElementById('forcedItem');
   const forcedItemAInput = document.getElementById('forcedItemA');
   const forcedItemBInput = document.getElementById('forcedItemB');
+  const forcedItemSameAInput = document.getElementById('forcedItemSameA');
+  const forcedItemSameBInput = document.getElementById('forcedItemSameB');
   const listSelect = document.getElementById('listSelect');
   const listSelectA = document.getElementById('listSelectA');
   const listSelectB = document.getElementById('listSelectB');
+  const listSelectSame = document.getElementById('listSelectSame');
   const practiceToggle = document.getElementById('practiceToggle');
   const notesDarkToggle = document.getElementById('notesDarkToggle');
   const statusMsg = document.getElementById('statusMsg');
@@ -950,13 +1141,14 @@ if(!window.storage){
   const listItemsInput = document.getElementById('listItems');
   const calibrateWrap = document.getElementById('calibrateWrap');
   const calibrateImg = document.getElementById('calibrateImg');
-  const calibrateMarker = document.getElementById('calibrateMarker');
   const forcedNoteTitleInput = document.getElementById('forcedNoteTitle');
   const forcedNoteDateInput = document.getElementById('forcedNoteDate');
   const forcedNoteTitleAInput = document.getElementById('forcedNoteTitleA');
   const forcedNoteTitleBInput = document.getElementById('forcedNoteTitleB');
   const forcedNoteDateAInput = document.getElementById('forcedNoteDateA');
   const forcedNoteDateBInput = document.getElementById('forcedNoteDateB');
+  const forcedNoteTitleSameInput = document.getElementById('forcedNoteTitleSame');
+  const forcedNoteDateSameInput = document.getElementById('forcedNoteDateSame');
   const noteManagerList = document.getElementById('noteManagerList');
   const noteEditor = document.getElementById('noteEditor');
   const noteEditTitle = document.getElementById('noteEditTitle');
@@ -987,50 +1179,93 @@ if(!window.storage){
     });
   }
 
+  let calibrationMode = null; // 'hotspot' | 'digits'
+  let calibrationScreenIndex = null;
+  let calibrationDigitsTemp = [];
+  const calibrateInstructions = document.getElementById('calibrateInstructions');
+  const calibrateMarkersLayer = document.getElementById('calibrateMarkersLayer');
+
   function refreshShotThumbs(){
+    const shots = currentShots();
     for(let i=1;i<=5;i++){
       const thumb = document.getElementById('shotThumb' + i);
-      if(shotDataUrls[i]){
-        thumb.style.backgroundImage = `url(${shotDataUrls[i]})`;
+      const calBtn = document.getElementById('shotCal' + i);
+      if(shots[i]){
+        thumb.style.backgroundImage = `url(${shots[i]})`;
         thumb.classList.add('filled');
         thumb.textContent = '';
+        calBtn.style.display = (i<=totalScreens) ? 'block' : 'none';
+        calBtn.textContent = (i===totalScreens) ? 'Calibrar Notas' : 'Calibrar dígitos';
       } else {
         thumb.style.backgroundImage = '';
         thumb.classList.remove('filled');
         thumb.textContent = 'Pantalla ' + i + (i===totalScreens ? ' (con Notas)' : '');
+        calBtn.style.display = 'none';
       }
     }
     document.getElementById('shotSlot4').style.display = totalScreens>=4 ? '' : 'none';
     document.getElementById('shotSlot5').style.display = totalScreens>=5 ? '' : 'none';
   }
 
-  function updateCalibrateVisibility(){
-    const shot = shotDataUrls[totalScreens];
-    calibrateWrap.style.display = shot ? 'block' : 'none';
-    if(shot){
-      calibrateImg.src = shot;
-      calibrateMarker.style.left = (notesHotspot.x*100) + '%';
-      calibrateMarker.style.top = (notesHotspot.y*100) + '%';
-      calibrateMarker.style.display = 'block';
+  function renderHotspotMarker(){
+    calibrateMarkersLayer.innerHTML = '';
+    const hs = currentHotspot();
+    const m = document.createElement('div');
+    m.className = 'cal-marker';
+    m.style.left = (hs.x*100) + '%';
+    m.style.top = (hs.y*100) + '%';
+    calibrateMarkersLayer.appendChild(m);
+  }
+
+  function renderDigitMarkers(){
+    calibrateMarkersLayer.innerHTML = '';
+    calibrationDigitsTemp.forEach((p, idx)=>{
+      const m = document.createElement('div');
+      m.className = 'cal-marker';
+      m.style.left = (p.x*100) + '%';
+      m.style.top = (p.y*100) + '%';
+      m.textContent = idx;
+      calibrateMarkersLayer.appendChild(m);
+    });
+  }
+
+  function openCalibration(screenIndex){
+    const shots = currentShots();
+    const img = shots[screenIndex];
+    if(!img) return;
+    calibrationScreenIndex = screenIndex;
+    calibrateImg.src = img;
+    calibrateWrap.style.display = 'block';
+    if(screenIndex === totalScreens){
+      calibrationMode = 'hotspot';
+      calibrateInstructions.textContent = 'Toca en la imagen el lugar exacto donde está el icono de Notas.';
+      renderHotspotMarker();
+    } else {
+      calibrationMode = 'digits';
+      calibrationDigitsTemp = (digitZonesFor(screenIndex) || []).slice();
+      calibrateInstructions.textContent = `Toca, en orden, 10 iconos para los dígitos 0 a 9 (el primero que toques será el 0). Llevas ${calibrationDigitsTemp.length}/10.`;
+      renderDigitMarkers();
     }
+    calibrateWrap.scrollIntoView({behavior:'smooth', block:'nearest'});
   }
 
   for(let i=1;i<=5;i++){
     const thumb = document.getElementById('shotThumb' + i);
     const input = document.getElementById('shotInput' + i);
+    const calBtn = document.getElementById('shotCal' + i);
     thumb.addEventListener('click', ()=> input.click());
+    calBtn.addEventListener('click', ()=> openCalibration(i));
     input.addEventListener('change', async ()=>{
       const file = input.files[0];
       if(!file) return;
       try{
         const dataUrl = await compressImage(file);
-        shotDataUrls[i] = dataUrl;
+        currentShots()[i] = dataUrl;
         refreshShotThumbs();
         applyShots();
-        try{ await window.storage.set('oraculo-shot-' + i, dataUrl, false); }catch(e){}
-        if(i === totalScreens) updateCalibrateVisibility();
-        statusMsg.textContent = 'Captura ' + i + ' cargada.';
-        setTimeout(()=> statusMsg.textContent = '', 1200);
+        try{ await window.storage.set('oraculo-shot-' + forceMode + '-' + i, dataUrl, false); }catch(e){}
+        statusMsg.textContent = 'Captura ' + i + ' cargada. Pulsa "Calibrar" para ajustarla.';
+        setTimeout(()=> statusMsg.textContent = '', 1800);
       }catch(e){
         statusMsg.textContent = 'No se pudo procesar la imagen.';
       }
@@ -1041,35 +1276,69 @@ if(!window.storage){
     const rect = calibrateImg.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
-    notesHotspot = {x, y};
-    calibrateMarker.style.left = (x*100) + '%';
-    calibrateMarker.style.top = (y*100) + '%';
-    calibrateMarker.style.display = 'block';
-    applyShots();
-    try{ await window.storage.set('oraculo-hotspot', JSON.stringify(notesHotspot), false); }catch(e2){}
+    if(calibrationMode === 'hotspot'){
+      notesHotspots[forceMode] = {x, y};
+      renderHotspotMarker();
+      applyShots();
+      try{ await window.storage.set('oraculo-hotspot-' + forceMode, JSON.stringify(notesHotspots[forceMode]), false); }catch(e2){}
+    } else if(calibrationMode === 'digits'){
+      if(calibrationDigitsTemp.length >= 10){
+        statusMsg.textContent = 'Ya tienes los 10 dígitos. Pulsa "Reiniciar" si quieres repetir.';
+        return;
+      }
+      calibrationDigitsTemp.push({x, y});
+      renderDigitMarkers();
+      calibrateInstructions.textContent = `Toca, en orden, 10 iconos para los dígitos 0 a 9. Llevas ${calibrationDigitsTemp.length}/10.`;
+      if(calibrationDigitsTemp.length === 10){
+        setDigitZonesFor(calibrationScreenIndex, calibrationDigitsTemp.slice());
+        try{
+          await window.storage.set('oraculo-digitzones-' + forceMode + '-' + calibrationScreenIndex, JSON.stringify(calibrationDigitsTemp), false);
+        }catch(e2){}
+        statusMsg.textContent = 'Calibración de dígitos guardada.';
+        setTimeout(()=> statusMsg.textContent = '', 1200);
+      }
+    }
+  });
+
+  document.getElementById('calibrateResetBtn').addEventListener('click', async ()=>{
+    if(calibrationMode === 'digits'){
+      calibrationDigitsTemp = [];
+      setDigitZonesFor(calibrationScreenIndex, null);
+      try{ await window.storage.delete('oraculo-digitzones-' + forceMode + '-' + calibrationScreenIndex, false); }catch(e){}
+      renderDigitMarkers();
+      calibrateInstructions.textContent = 'Toca, en orden, 10 iconos para los dígitos 0 a 9. Llevas 0/10.';
+    } else if(calibrationMode === 'hotspot'){
+      notesHotspots[forceMode] = {x:0.5, y:0.5};
+      renderHotspotMarker();
+      applyShots();
+    }
   });
 
   document.getElementById('clearShotsBtn').addEventListener('click', async ()=>{
-    shotDataUrls = {1:null, 2:null, 3:null, 4:null, 5:null};
+    const shots = currentShots();
+    Object.keys(shots).forEach(k=> shots[k] = null);
+    digitZones[forceMode] = {};
     refreshShotThumbs();
     calibrateWrap.style.display = 'none';
     for(let i=1;i<=5;i++){
-      try{ await window.storage.delete('oraculo-shot-' + i, false); }catch(e){}
+      try{ await window.storage.delete('oraculo-shot-' + forceMode + '-' + i, false); }catch(e){}
+      try{ await window.storage.delete('oraculo-digitzones-' + forceMode + '-' + i, false); }catch(e){}
     }
     applyShots();
-    statusMsg.textContent = 'Capturas eliminadas.';
+    statusMsg.textContent = 'Capturas de este modo eliminadas.';
     setTimeout(()=> statusMsg.textContent = '', 1200);
   });
 
   function applyShots(){
+    const shots = currentShots();
     let anyShot = false;
-    for(let i=1;i<=totalScreens;i++){ if(shotDataUrls[i]) anyShot = true; }
+    for(let i=1;i<=totalScreens;i++){ if(shots[i]) anyShot = true; }
     document.getElementById('app').classList.toggle('hide-chrome', anyShot);
     for(let i=1;i<=totalScreens;i++){
       const el = document.getElementById('screen' + i);
       if(!el) continue;
-      if(shotDataUrls[i]){
-        el.style.backgroundImage = `url(${shotDataUrls[i]})`;
+      if(shots[i]){
+        el.style.backgroundImage = `url(${shots[i]})`;
         el.classList.add('has-shot');
       } else {
         el.style.backgroundImage = '';
@@ -1077,9 +1346,10 @@ if(!window.storage){
       }
     }
     if(notesHotspotEl){
-      notesHotspotEl.style.left = (notesHotspot.x*100) + '%';
-      notesHotspotEl.style.top = (notesHotspot.y*100) + '%';
-      notesHotspotEl.style.pointerEvents = shotDataUrls[totalScreens] ? 'auto' : 'none';
+      const hs = currentHotspot();
+      notesHotspotEl.style.left = (hs.x*100) + '%';
+      notesHotspotEl.style.top = (hs.y*100) + '%';
+      notesHotspotEl.style.pointerEvents = shots[totalScreens] ? 'auto' : 'none';
     }
   }
 
@@ -1087,22 +1357,26 @@ if(!window.storage){
     forceMode = forceModeSelect.value;
     singleForceFields.style.display = forceMode==='single' ? '' : 'none';
     doubleForceFields.style.display = forceMode==='double' ? '' : 'none';
+    doubleSameForceFields.style.display = forceMode==='double-same' ? '' : 'none';
     buildHomeScreens();
     refreshShotThumbs();
-    updateCalibrateVisibility();
+    calibrateWrap.style.display = 'none';
   });
 
   function openConfig(){
     forceModeSelect.value = forceMode;
     singleForceFields.style.display = forceMode==='single' ? '' : 'none';
     doubleForceFields.style.display = forceMode==='double' ? '' : 'none';
+    doubleSameForceFields.style.display = forceMode==='double-same' ? '' : 'none';
     forcedItemInput.value = forcedItemText;
     forcedItemAInput.value = forcedItemTextA;
     forcedItemBInput.value = forcedItemTextB;
+    forcedItemSameAInput.value = forcedItemTextSameA;
+    forcedItemSameBInput.value = forcedItemTextSameB;
     refreshAllListSelects();
     refreshCustomListsManager();
     refreshShotThumbs();
-    updateCalibrateVisibility();
+    calibrateWrap.style.display = 'none';
     practiceToggle.checked = practiceMode;
     notesDarkToggle.checked = notesDarkMode;
     forcedNoteTitleInput.value = forcedNoteTitle;
@@ -1111,6 +1385,8 @@ if(!window.storage){
     forcedNoteTitleBInput.value = forcedNoteTitleB;
     forcedNoteDateAInput.value = forcedNoteDateA;
     forcedNoteDateBInput.value = forcedNoteDateB;
+    forcedNoteTitleSameInput.value = forcedNoteTitleSame;
+    forcedNoteDateSameInput.value = forcedNoteDateSame;
     refreshNoteManagerList();
     noteEditor.style.display = 'none';
     listEditor.style.display = 'none';
@@ -1120,6 +1396,7 @@ if(!window.storage){
   listSelect.addEventListener('change', ()=>{ selectedList = listSelect.value; });
   listSelectA.addEventListener('change', ()=>{ selectedListA = listSelectA.value; });
   listSelectB.addEventListener('change', ()=>{ selectedListB = listSelectB.value; });
+  listSelectSame.addEventListener('change', ()=>{ selectedListSame = listSelectSame.value; });
 
   document.getElementById('newListBtn').addEventListener('click', ()=>{
     listNameInput.value = '';
@@ -1215,7 +1492,7 @@ if(!window.storage){
       note.dateText = noteEditDate.value.trim() || 'Hoy';
       note.body = body;
     } else {
-      const maxOrder = decoyNotes.reduce((m,n)=>Math.max(m,n.order??0), Math.max(forcedNoteOrder, forcedNoteOrderA, forcedNoteOrderB));
+      const maxOrder = decoyNotes.reduce((m,n)=>Math.max(m,n.order??0), Math.max(forcedNoteOrder, forcedNoteOrderA, forcedNoteOrderB, forcedNoteOrderSame));
       decoyNotes.push({
         id: 'n' + Date.now(),
         title, body,
@@ -1253,6 +1530,10 @@ if(!window.storage){
     forcedNoteTitleB = forcedNoteTitleBInput.value.trim() || 'Lista B';
     forcedNoteDateA = forcedNoteDateAInput.value.trim() || 'Hoy';
     forcedNoteDateB = forcedNoteDateBInput.value.trim() || 'Hoy';
+    forcedItemTextSameA = forcedItemSameAInput.value.trim();
+    forcedItemTextSameB = forcedItemSameBInput.value.trim();
+    forcedNoteTitleSame = forcedNoteTitleSameInput.value.trim() || 'Lista';
+    forcedNoteDateSame = forcedNoteDateSameInput.value.trim() || 'Hoy';
     practiceMode = practiceToggle.checked;
     notesDarkMode = notesDarkToggle.checked;
     zonesEl.classList.toggle('on', practiceMode);
@@ -1264,6 +1545,8 @@ if(!window.storage){
         forceMode, forcedItemText, selectedList, forcedNoteTitle, forcedNoteDate,
         forcedItemTextA, forcedItemTextB, selectedListA, selectedListB,
         forcedNoteTitleA, forcedNoteTitleB, forcedNoteDateA, forcedNoteDateB,
+        forcedItemTextSameA, forcedItemTextSameB, selectedListSame,
+        forcedNoteTitleSame, forcedNoteDateSame,
         notesDarkMode
       }), false);
       statusMsg.textContent = 'Guardado.';
@@ -1302,6 +1585,11 @@ if(!window.storage){
         forcedNoteTitleB = parsed.forcedNoteTitleB || 'Lista B';
         forcedNoteDateA = parsed.forcedNoteDateA || 'Hoy';
         forcedNoteDateB = parsed.forcedNoteDateB || 'Hoy';
+        forcedItemTextSameA = parsed.forcedItemTextSameA || '';
+        forcedItemTextSameB = parsed.forcedItemTextSameB || '';
+        selectedListSame = parsed.selectedListSame || 'builtin:objetos';
+        forcedNoteTitleSame = parsed.forcedNoteTitleSame || 'Lista';
+        forcedNoteDateSame = parsed.forcedNoteDateSame || 'Hoy';
         notesDarkMode = !!parsed.notesDarkMode;
       }
     }catch(e){ /* sin datos guardados aún */ }
@@ -1323,16 +1611,23 @@ if(!window.storage){
       }
     }catch(e){ /* sin notas señuelo guardadas aún */ }
 
-    for(let i=1;i<=5;i++){
+    for(const mode of ['single','double','double-same']){
+      const maxSlots = mode==='single' ? 3 : 5;
+      for(let i=1;i<=maxSlots;i++){
+        try{
+          const shot = await window.storage.get('oraculo-shot-' + mode + '-' + i, false);
+          if(shot && shot.value) shotSets[mode][i] = shot.value;
+        }catch(e){ /* sin captura guardada */ }
+        try{
+          const dz = await window.storage.get('oraculo-digitzones-' + mode + '-' + i, false);
+          if(dz && dz.value) digitZones[mode][i] = JSON.parse(dz.value);
+        }catch(e){ /* sin calibración guardada */ }
+      }
       try{
-        const shot = await window.storage.get('oraculo-shot-' + i, false);
-        if(shot && shot.value) shotDataUrls[i] = shot.value;
-      }catch(e){ /* sin captura guardada */ }
+        const hs = await window.storage.get('oraculo-hotspot-' + mode, false);
+        if(hs && hs.value) notesHotspots[mode] = JSON.parse(hs.value);
+      }catch(e){ /* sin hotspot guardado, se usa el centro por defecto */ }
     }
-    try{
-      const hs = await window.storage.get('oraculo-hotspot', false);
-      if(hs && hs.value) notesHotspot = JSON.parse(hs.value);
-    }catch(e){ /* sin hotspot guardado, se usa el centro por defecto */ }
 
     buildHomeScreens();
   }
