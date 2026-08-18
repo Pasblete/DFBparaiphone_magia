@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>Oráculo · Pantalla falsa</title>
 <style>
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none;}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; touch-action:manipulation;}
   html,body{
     margin:0; padding:0; height:100%;
     background:#000;
@@ -300,6 +300,13 @@
   .note-manager-row{
     display:flex; align-items:center; justify-content:space-between;
     padding:8px 0; border-bottom:1px solid #eee; font-size:13px;
+    background:#fff; touch-action:pan-y;
+  }
+  .note-manager-row.nm-dragging{
+    box-shadow:0 4px 12px rgba(0,0,0,0.15); border-radius:8px; z-index:20; opacity:0.95;
+  }
+  .note-manager-row .nm-handle{
+    color:#bbb; font-size:16px; padding:0 8px 0 2px; cursor:grab; touch-action:none;
   }
   .note-manager-row .nm-info{ flex:1; overflow:hidden; }
   .note-manager-row .nm-title{ font-weight:600; }
@@ -312,7 +319,7 @@
   #app.hide-chrome .statusbar,
   #app.hide-chrome .dots,
   #app.hide-chrome .dock{ display:none; }
-  .screen.has-shot{ background-size:cover; background-position:center; }
+  .screen.has-shot{ background-size:100% 100%; background-position:center; background-repeat:no-repeat; }
   .screen.has-shot .icon{ display:none; }
   .notes-hotspot{
     position:absolute; width:68px; height:68px;
@@ -537,6 +544,14 @@
       <input type="checkbox" id="practiceToggle" style="width:auto;">
       <label style="margin:0;">Modo práctica (muestra zonas y número)</label>
     </div>
+
+    <label style="margin-top:18px;">Copia de seguridad</label>
+    <p style="margin:0 0 8px;">Guarda toda tu configuración (listas, notas, capturas, calibraciones) en un archivo, o restáurala en este u otro móvil.</p>
+    <div class="config-actions">
+      <button class="btn-secondary" id="exportConfigBtn">Exportar a archivo</button>
+      <button class="btn-secondary" id="importConfigBtn">Importar desde archivo</button>
+    </div>
+    <input type="file" accept="application/json" id="importConfigInput" style="display:none;">
 
     <div class="config-actions">
       <button class="btn-secondary" id="closeConfig">Cerrar</button>
@@ -914,25 +929,30 @@ if(!window.storage){
   appEl.addEventListener('touchend', (e)=>{
     if(!dragging) return;
     dragging = false;
-    screensEl.style.transition = 'transform 0.35s cubic-bezier(0.22,0.61,0.36,1)';
     const endX = e.changedTouches[0].clientX;
     const dx = endX - startX;
 
     if(dx < -60 && currentPage < notesPageIndex){
       // swipe hacia delante: usar el dígito capturado al empezar el gesto
+      screensEl.style.transition = 'transform 0.35s cubic-bezier(0.22,0.61,0.36,1)';
       digits[currentPage] = startZone;
       vibrate(15);
       updateReadout();
       goToPage(currentPage + 1);
     } else if(dx > 60 && currentPage > 0){
       // swipe hacia atrás: "olvida" el dígito de la pantalla anterior para poder repetirlo
+      screensEl.style.transition = 'transform 0.35s cubic-bezier(0.22,0.61,0.36,1)';
       digits[currentPage - 1] = null;
       vibrate(10);
       updateReadout();
       goToPage(currentPage - 1);
-    } else {
-      goToPage(currentPage); // gesto insuficiente: volver a la posición actual
+    } else if(Math.abs(dx) > 5){
+      // arrastre real pero insuficiente para cambiar de pantalla: volver a encajar
+      screensEl.style.transition = 'transform 0.35s cubic-bezier(0.22,0.61,0.36,1)';
+      goToPage(currentPage);
     }
+    // si apenas hubo movimiento (dx casi 0), es un toque simple: no tocamos el transform
+    // en absoluto, para no interferir con el clic nativo del icono/zona que se haya tocado.
   });
 
   // long-press para abrir config
@@ -1441,7 +1461,9 @@ if(!window.storage){
     decoyNotes.slice().sort((a,b)=>(a.order??0)-(b.order??0)).forEach(note=>{
       const row = document.createElement('div');
       row.className = 'note-manager-row';
+      row.dataset.id = note.id;
       row.innerHTML = `
+        <span class="nm-handle">⠿</span>
         <div class="nm-info">
           <div class="nm-title">${note.title}</div>
           <div class="nm-date">${note.dateText}</div>
@@ -1452,8 +1474,59 @@ if(!window.storage){
         </div>`;
       row.querySelector('[data-act=edit]').addEventListener('click', ()=> openNoteEditor(note));
       row.querySelector('[data-act=del]').addEventListener('click', ()=> deleteDecoyNote(note.id));
+      attachNoteDragHandlers(row);
       noteManagerList.appendChild(row);
     });
+  }
+
+  function attachNoteDragHandlers(row){
+    const handle = row.querySelector('.nm-handle');
+    let startY = 0, dragging = false;
+
+    handle.addEventListener('touchstart', (e)=>{
+      dragging = true;
+      startY = e.touches[0].clientY;
+      row.classList.add('nm-dragging');
+      row.style.position = 'relative';
+    }, {passive:true});
+
+    handle.addEventListener('touchmove', (e)=>{
+      if(!dragging) return;
+      const dy = e.touches[0].clientY - startY;
+      row.style.transform = `translateY(${dy}px)`;
+
+      const sibling = dy < 0 ? row.previousElementSibling : row.nextElementSibling;
+      if(sibling && sibling.classList.contains('note-manager-row')){
+        const sibRect = sibling.getBoundingClientRect();
+        const midpoint = sibRect.top + sibRect.height / 2;
+        const rowRect = row.getBoundingClientRect();
+        const crossed = dy < 0 ? (rowRect.top < midpoint) : (rowRect.bottom > midpoint);
+        if(crossed){
+          if(dy < 0) noteManagerList.insertBefore(row, sibling);
+          else noteManagerList.insertBefore(sibling, row);
+          startY = e.touches[0].clientY;
+          row.style.transform = 'translateY(0px)';
+        }
+      }
+    }, {passive:true});
+
+    handle.addEventListener('touchend', async ()=>{
+      dragging = false;
+      row.style.transform = '';
+      row.style.position = '';
+      row.classList.remove('nm-dragging');
+      await commitNoteOrder();
+    });
+  }
+
+  async function commitNoteOrder(){
+    const rows = Array.from(noteManagerList.querySelectorAll('.note-manager-row'));
+    const baseOffset = 1000; // por encima de cualquier orden de nota forzada
+    rows.forEach((row, idx)=>{
+      const note = decoyNotes.find(n => n.id === row.dataset.id);
+      if(note) note.order = baseOffset + idx;
+    });
+    await persistDecoyNotes();
   }
 
   function openNoteEditor(note){
@@ -1518,6 +1591,153 @@ if(!window.storage){
 
   document.getElementById('closeConfig').addEventListener('click', ()=>{
     configOverlay.classList.remove('open');
+  });
+
+  function gatherFullConfig(){
+    return {
+      forceMode,
+      forcedItemText, selectedList, forcedNoteTitle, forcedNoteDate,
+      forcedItemTextA, forcedItemTextB, selectedListA, selectedListB,
+      forcedNoteTitleA, forcedNoteTitleB, forcedNoteDateA, forcedNoteDateB,
+      forcedItemTextSameA, forcedItemTextSameB, selectedListSame,
+      forcedNoteTitleSame, forcedNoteDateSame,
+      notesDarkMode,
+      customLists, decoyNotes,
+      shotSets, notesHotspots, digitZones
+    };
+  }
+
+  async function persistFullConfig(){
+    try{
+      await window.storage.set('oraculo-config', JSON.stringify({
+        forceMode, forcedItemText, selectedList, forcedNoteTitle, forcedNoteDate,
+        forcedItemTextA, forcedItemTextB, selectedListA, selectedListB,
+        forcedNoteTitleA, forcedNoteTitleB, forcedNoteDateA, forcedNoteDateB,
+        forcedItemTextSameA, forcedItemTextSameB, selectedListSame,
+        forcedNoteTitleSame, forcedNoteDateSame, notesDarkMode
+      }), false);
+    }catch(e){}
+
+    try{
+      const names = Object.keys(customLists);
+      for(const name of names){
+        await window.storage.set('oraculo-list-' + name, JSON.stringify(customLists[name]), false);
+      }
+      await window.storage.set('oraculo-list-index', JSON.stringify(names), false);
+    }catch(e){}
+
+    try{
+      const ids = decoyNotes.map(n => n.id);
+      await window.storage.set('oraculo-notes-index', JSON.stringify(ids), false);
+      for(const note of decoyNotes){
+        await window.storage.set('oraculo-note-' + note.id, JSON.stringify(note), false);
+      }
+    }catch(e){}
+
+    for(const mode of ['single','double','double-same']){
+      const maxSlots = (mode === 'double' || mode === 'double-same') ? 5 : 3;
+      for(let i=1;i<=maxSlots;i++){
+        try{
+          if(shotSets[mode] && shotSets[mode][i]){
+            await window.storage.set('oraculo-shot-' + mode + '-' + i, shotSets[mode][i], false);
+          }
+          if(digitZones[mode] && digitZones[mode][i]){
+            await window.storage.set('oraculo-digitzones-' + mode + '-' + i, JSON.stringify(digitZones[mode][i]), false);
+          }
+        }catch(e){}
+      }
+      try{
+        if(notesHotspots[mode]){
+          await window.storage.set('oraculo-hotspot-' + mode, JSON.stringify(notesHotspots[mode]), false);
+        }
+      }catch(e){}
+    }
+  }
+
+  async function applyFullConfig(cfg){
+    forceMode = cfg.forceMode || 'single';
+    forcedItemText = cfg.forcedItemText || '';
+    selectedList = cfg.selectedList || 'builtin:objetos';
+    forcedNoteTitle = cfg.forcedNoteTitle || 'Lista';
+    forcedNoteDate = cfg.forcedNoteDate || 'Hoy';
+    forcedItemTextA = cfg.forcedItemTextA || '';
+    forcedItemTextB = cfg.forcedItemTextB || '';
+    selectedListA = cfg.selectedListA || 'builtin:objetos';
+    selectedListB = cfg.selectedListB || 'builtin:objetos';
+    forcedNoteTitleA = cfg.forcedNoteTitleA || 'Lista A';
+    forcedNoteTitleB = cfg.forcedNoteTitleB || 'Lista B';
+    forcedNoteDateA = cfg.forcedNoteDateA || 'Hoy';
+    forcedNoteDateB = cfg.forcedNoteDateB || 'Hoy';
+    forcedItemTextSameA = cfg.forcedItemTextSameA || '';
+    forcedItemTextSameB = cfg.forcedItemTextSameB || '';
+    selectedListSame = cfg.selectedListSame || 'builtin:objetos';
+    forcedNoteTitleSame = cfg.forcedNoteTitleSame || 'Lista';
+    forcedNoteDateSame = cfg.forcedNoteDateSame || 'Hoy';
+    notesDarkMode = !!cfg.notesDarkMode;
+    customLists = cfg.customLists || {};
+    decoyNotes = cfg.decoyNotes || [];
+    shotSets = cfg.shotSets || shotSets;
+    notesHotspots = cfg.notesHotspots || notesHotspots;
+    digitZones = cfg.digitZones || digitZones;
+
+    await persistFullConfig();
+
+    forceModeSelect.value = forceMode;
+    singleForceFields.style.display = forceMode==='single' ? '' : 'none';
+    doubleForceFields.style.display = forceMode==='double' ? '' : 'none';
+    doubleSameForceFields.style.display = forceMode==='double-same' ? '' : 'none';
+    forcedItemInput.value = forcedItemText;
+    forcedItemAInput.value = forcedItemTextA;
+    forcedItemBInput.value = forcedItemTextB;
+    notesDarkToggle.checked = notesDarkMode;
+    forcedNoteTitleInput.value = forcedNoteTitle;
+    forcedNoteDateInput.value = forcedNoteDate;
+    forcedNoteTitleAInput.value = forcedNoteTitleA;
+    forcedNoteTitleBInput.value = forcedNoteTitleB;
+    forcedNoteDateAInput.value = forcedNoteDateA;
+    forcedNoteDateBInput.value = forcedNoteDateB;
+
+    buildHomeScreens();
+    refreshAllListSelects();
+    refreshCustomListsManager();
+    refreshShotThumbs();
+    calibrateWrap.style.display = 'none';
+    refreshNoteManagerList();
+  }
+
+  document.getElementById('exportConfigBtn').addEventListener('click', ()=>{
+    const data = JSON.stringify(gatherFullConfig(), null, 2);
+    const blob = new Blob([data], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'oraculo-config.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=> URL.revokeObjectURL(url), 2000);
+    statusMsg.textContent = 'Configuración exportada.';
+    setTimeout(()=> statusMsg.textContent = '', 1500);
+  });
+
+  document.getElementById('importConfigBtn').addEventListener('click', ()=>{
+    document.getElementById('importConfigInput').click();
+  });
+
+  document.getElementById('importConfigInput').addEventListener('change', async ()=>{
+    const input = document.getElementById('importConfigInput');
+    const file = input.files[0];
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const cfg = JSON.parse(text);
+      await applyFullConfig(cfg);
+      statusMsg.textContent = 'Configuración importada correctamente.';
+    }catch(e){
+      statusMsg.textContent = 'El archivo no es válido.';
+    }
+    input.value = '';
+    setTimeout(()=> statusMsg.textContent = '', 1800);
   });
 
   document.getElementById('saveConfig').addEventListener('click', async ()=>{
@@ -1636,4 +1856,4 @@ if(!window.storage){
 })();
 </script>
 </body>
-</html>
+</html
