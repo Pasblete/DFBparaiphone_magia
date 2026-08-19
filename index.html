@@ -20,18 +20,6 @@
     overflow:hidden;
     background: linear-gradient(160deg,#1c1c3a 0%, #0d0d20 55%, #000 100%);
   }
-  .statusbar{
-    position:absolute; top:0; left:0; right:0;
-    height: 46px;
-    display:flex; align-items:center; justify-content:space-between;
-    padding: 0 22px;
-    color:#fff;
-    font-size:15px;
-    font-weight:600;
-    z-index:20;
-    letter-spacing:0.3px;
-  }
-  .statusbar .icons{ display:flex; gap:5px; align-items:center; font-size:14px; }
 
   .screens{
     position:absolute; top:0; left:0;
@@ -92,15 +80,13 @@
   .dock .icon .label{ display:none; }
 
   /* zonas de práctica */
-  .practice-zones{
-    position:absolute; top:0; bottom:0; left:0; right:0;
-    display:none;
-    z-index:30;
-    pointer-events:none;
+  .practice-live-overlay{
+    position:absolute; inset:0;
+    z-index:30; pointer-events:none;
   }
-  .practice-zones.on{ display:flex; }
-  .practice-zones div{
-    flex:1; border-right:1px dashed rgba(255,80,80,0.5);
+  .practice-zone-strip{
+    position:absolute; top:0; bottom:0; width:10%;
+    border-right:1px dashed rgba(255,80,80,0.5);
     display:flex; align-items:flex-end; justify-content:center;
     padding-bottom:130px;
     color:rgba(255,120,120,0.9);
@@ -118,6 +104,7 @@
   .notes-screen, .notes-list-screen{
     position:absolute; inset:0;
     display:flex; flex-direction:column;
+    padding-top: env(safe-area-inset-top, 24px);
     transform: translateX(100%);
     transition: transform 0.32s ease;
     font-family: -apple-system, 'SF Pro Text', Helvetica, Arial, sans-serif;
@@ -132,18 +119,12 @@
   }
   .notes-screen.open, .notes-list-screen.open{ transform: translateX(0); }
 
-  .n-status{
-    height:46px; background:var(--n-bar);
-    display:flex; align-items:flex-end; justify-content:space-between;
-    padding:0 22px 8px; color:var(--n-text); font-size:14px; font-weight:600;
-  }
-  .n-status .icons{ display:flex; gap:5px; align-items:center; font-size:13px; }
-
   .n-navbar{
     height:44px; background:var(--n-bar);
     display:flex; align-items:center; justify-content:space-between;
     padding:0 14px;
   }
+  .notes-screen .n-navbar{ background: var(--n-bg); }
   .n-back{
     color:var(--n-accent); font-size:17px; display:flex; align-items:center; gap:1px;
   }
@@ -160,22 +141,22 @@
     font-size:13px; color:var(--n-sub); text-align:center; margin: 2px 0 6px;
   }
   .n-title{
-    color:var(--n-text); font-size:30px; font-weight:700;
+    color:var(--n-text); font-size:34px; font-weight:700;
     margin: 4px 0 6px; line-height:1.15;
     outline:none;
   }
   .n-content-body{ outline:none; }
   .n-line{
     display:flex; align-items:baseline; gap:6px;
-    font-size:17px; line-height:1.6; color:var(--n-text);
+    font-size:20px; line-height:1.55; color:var(--n-text);
     padding: 1px 0;
   }
   .n-line .n-num{
-    color:var(--n-text); min-width:22px; text-align:right; flex-shrink:0;
+    color:var(--n-text); min-width:24px; text-align:right; flex-shrink:0;
   }
   .n-line .n-txt{ flex:1; }
   .n-line-plain{
-    white-space:pre-wrap; font-size:17px; line-height:1.55; color:var(--n-text);
+    white-space:pre-wrap; font-size:20px; line-height:1.5; color:var(--n-text);
     outline:none; min-height:200px;
   }
 
@@ -317,7 +298,6 @@
     padding:5px 9px; font-size:11px; border-radius:6px; border:1px solid #ccc; background:#fafafa; cursor:pointer;
   }
 
-  #app.hide-chrome .statusbar,
   #app.hide-chrome .dots,
   #app.hide-chrome .dock{ display:none; }
   .screen.has-shot{ background-size:100% 100%; background-position:center; background-repeat:no-repeat; }
@@ -338,12 +318,6 @@
 <body>
 
 <div id="app">
-  <div class="statusbar">
-    <span id="clock">9:41</span>
-    <span class="icons">📶 🛜 🔋</span>
-  </div>
-
-  <div class="practice-zones" id="zones1"></div>
   <div class="practice-readout" id="readout"></div>
 
   <div class="screens" id="screens"></div>
@@ -353,10 +327,6 @@
   <div class="dock" id="dock"></div>
 
   <div class="notes-list-screen" id="notesListScreen">
-    <div class="n-status">
-      <span id="notesListClock">9:41</span>
-      <span class="icons">📶 🛜 🔋</span>
-    </div>
     <div class="n-navbar">
       <div class="n-back" id="notesListBack">‹ Carpetas</div>
       <div class="n-navicons"><span>⋯</span></div>
@@ -371,14 +341,10 @@
   </div>
 
   <div class="notes-screen" id="notesScreen">
-    <div class="n-status">
-      <span id="notesClock">9:41</span>
-      <span class="icons">📶 🛜 🔋</span>
-    </div>
     <div class="n-navbar">
       <div class="n-back" id="notesBack">‹ Notas</div>
       <div class="n-navicons">
-        <span class="disabled">↶</span><span class="disabled">↷</span><span>⬆</span><span>⋯</span>
+        <span>⬆</span><span>⋯</span>
       </div>
       <div class="n-ok-btn" id="notesOkBtn">OK</div>
     </div>
@@ -388,7 +354,7 @@
       <div id="notesList" class="n-content-body" contenteditable="true"></div>
     </div>
     <div class="n-bottombar">
-      <span>☑</span><span>📎</span><span>Ⓐ</span><span>🌀</span><span>🖉</span>
+      <span>☑</span><span>📎</span><span>Ⓐ</span><span style="color:#0a84ff;">🌀</span><span>🖉</span>
     </div>
   </div>
 </div>
@@ -546,6 +512,10 @@
       <label style="margin:0;">Modo práctica (muestra zonas y número)</label>
     </div>
 
+    <label style="margin-top:18px;">Reinicio rápido</label>
+    <p style="margin:0 0 8px;">Vuelve a la primera pantalla y olvida los dígitos metidos, sin perder ninguna configuración. También puedes hacerlo durante la actuación con un triple toque rápido en cualquier pantalla de inicio.</p>
+    <button class="btn-secondary" id="quickResetBtn" style="width:100%;">Reiniciar para el siguiente espectador</button>
+
     <label style="margin-top:18px;">Copia de seguridad</label>
     <p style="margin:0 0 8px;">Guarda toda tu configuración (listas, notas, capturas, calibraciones) en un archivo, o restáurala en este u otro móvil.</p>
     <div class="config-actions">
@@ -606,10 +576,16 @@ if(!window.storage){
     el.style.height = h + 'px';
   }
   sizeApp();
-  window.addEventListener('resize', sizeApp);
+  // el lanzamiento "standalone" a veces tarda en asentar la altura real: reintentamos
+  // varias veces en el primer segundo por si el primer cálculo llega demasiado pronto.
+  [100, 300, 600, 1000].forEach(ms => setTimeout(sizeApp, ms));
+  window.addEventListener('load', sizeApp);
+  window.addEventListener('pageshow', sizeApp);
   window.addEventListener('orientationchange', ()=> setTimeout(sizeApp, 300));
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) setTimeout(sizeApp, 50); });
-  if(window.visualViewport){ window.visualViewport.addEventListener('resize', sizeApp); }
+  // OJO: a propósito NO escuchamos 'resize' ni visualViewport 'resize' aquí — esos
+  // también se disparan cuando aparece/desaparece el teclado al editar una nota, y
+  // recalcular la altura justo entonces dejaba un hueco negro momentáneo bajo el texto.
 
   // ---------- datos de relleno ----------
   const POOLS = {
@@ -858,32 +834,49 @@ if(!window.storage){
     refreshCustomListsManager();
   }
 
-  // reloj real
-  function updateClock(){
-    const d = new Date();
-    const t = d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0');
-    document.getElementById('clock').textContent = t;
-    const notesClock = document.getElementById('notesClock');
-    if(notesClock) notesClock.textContent = t;
-    const notesListClock = document.getElementById('notesListClock');
-    if(notesListClock) notesListClock.textContent = t;
-  }
-  updateClock();
-  setInterval(updateClock, 15000);
+  // (se ha quitado el reloj falso: ahora se usa la barra de estado real del sistema)
 
-  // zonas de práctica (10 columnas)
-  const zonesEl = document.getElementById('zones1');
-  for(let i=0;i<10;i++){
-    const z = document.createElement('div');
-    z.textContent = i;
-    zonesEl.appendChild(z);
-  }
   const readout = document.getElementById('readout');
+
+  function renderPracticeOverlay(){
+    // limpiar overlays anteriores de cualquier pantalla
+    document.querySelectorAll('.practice-live-overlay').forEach(el => el.remove());
+    if(!practiceMode) return;
+    if(currentPage >= notesPageIndex) return; // en la pantalla de Notas no hay dígito que marcar
+    const screenEl = document.getElementById('screen' + (currentPage + 1));
+    if(!screenEl) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'practice-live-overlay';
+    const zones = digitZonesFor(currentPage + 1);
+    if(zones && zones.length === 10){
+      // ya calibrado con iconos reales: mostrar esos 10 puntos exactos
+      zones.forEach((p, idx)=>{
+        const m = document.createElement('div');
+        m.className = 'cal-marker';
+        m.style.left = (p.x*100) + '%';
+        m.style.top = (p.y*100) + '%';
+        m.textContent = idx;
+        overlay.appendChild(m);
+      });
+    } else {
+      // sin calibrar todavía: franjas por columnas, como respaldo
+      for(let i=0;i<10;i++){
+        const z = document.createElement('div');
+        z.className = 'practice-zone-strip';
+        z.style.left = (i*10) + '%';
+        z.textContent = i;
+        overlay.appendChild(z);
+      }
+    }
+    screenEl.appendChild(overlay);
+  }
 
   function goToPage(n){
     currentPage = n;
     screensEl.style.transform = `translateX(-${n * (100/totalScreens)}%)`;
     dots.forEach((d,i)=> d.classList.toggle('active', i===n));
+    renderPracticeOverlay();
   }
 
   function zoneFromX(x){
@@ -970,7 +963,29 @@ if(!window.storage){
     }
     // si apenas hubo movimiento (dx casi 0), es un toque simple: no tocamos el transform
     // en absoluto, para no interferir con el clic nativo del icono/zona que se haya tocado.
+    if(Math.abs(dx) <= 5 && currentPage < notesPageIndex){
+      registerTapForQuickReset();
+    }
   });
+
+  let quickResetTaps = [];
+  function registerTapForQuickReset(){
+    const now = Date.now();
+    quickResetTaps = quickResetTaps.filter(t => now - t < 600);
+    quickResetTaps.push(now);
+    if(quickResetTaps.length >= 3){
+      quickResetTaps = [];
+      quickReset();
+    }
+  }
+
+  function quickReset(){
+    document.getElementById('notesScreen').classList.remove('open');
+    document.getElementById('notesListScreen').classList.remove('open');
+    digits = [];
+    vibrate([15,40,15]);
+    goToPage(0);
+  }
 
   // long-press para abrir config
   let pressTimer = null;
@@ -1072,15 +1087,21 @@ if(!window.storage){
 
   // Edición real: al enfocar el título o el cuerpo, aparece el teclado auténtico
   // del iPhone y cambiamos la barra de navegación a modo edición (botón OK).
+  // También ocultamos nuestra barra de iconos inferior: intentar que "flote" pegada
+  // al teclado real no es fiable en una web, así que mejor la quitamos de en medio
+  // mientras se escribe (igual que la vista de lista tampoco la muestra).
   const notesNavIcons = document.querySelector('#notesScreen .n-navicons');
   const notesOkBtn = document.getElementById('notesOkBtn');
+  const notesBottombar = document.querySelector('#notesScreen .n-bottombar');
   function enterEditMode(){
     notesNavIcons.style.display = 'none';
     notesOkBtn.style.display = 'block';
+    notesBottombar.style.display = 'none';
   }
   function exitEditMode(){
     notesNavIcons.style.display = 'flex';
     notesOkBtn.style.display = 'none';
+    notesBottombar.style.display = 'flex';
   }
   document.getElementById('notesTitle').addEventListener('focus', enterEditMode);
   document.getElementById('notesList').addEventListener('focus', enterEditMode);
@@ -1722,6 +1743,11 @@ if(!window.storage){
     refreshNoteManagerList();
   }
 
+  document.getElementById('quickResetBtn').addEventListener('click', ()=>{
+    quickReset();
+    configOverlay.classList.remove('open');
+  });
+
   document.getElementById('exportConfigBtn').addEventListener('click', ()=>{
     const data = JSON.stringify(gatherFullConfig(), null, 2);
     const blob = new Blob([data], {type:'application/json'});
@@ -1773,9 +1799,9 @@ if(!window.storage){
     forcedNoteDateSame = forcedNoteDateSameInput.value.trim() || 'Hoy';
     practiceMode = practiceToggle.checked;
     notesDarkMode = notesDarkToggle.checked;
-    zonesEl.classList.toggle('on', practiceMode);
     readout.classList.toggle('on', practiceMode);
     if(!practiceMode) readout.textContent = '';
+    renderPracticeOverlay();
 
     try{
       await window.storage.set('oraculo-config', JSON.stringify({
