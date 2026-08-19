@@ -41,6 +41,7 @@
     will-change: transform;
   }
   .screen{
+    position:relative;
     height:100%;
     padding: 70px 22px 110px;
     display:grid;
@@ -594,6 +595,22 @@ if(!window.storage){
 }
 
 (function(){
+  // Corrige un fallo conocido de Safari en modo "añadido a inicio": al arrancar,
+  // a veces calcula mal la altura visible real hasta que se dispara algún evento
+  // de resize/scroll — eso dejaba una franja negra abajo. Forzamos el alto exacto
+  // por JS y lo recalculamos ante cualquier cambio de viewport.
+  function sizeApp(){
+    const el = document.getElementById('app');
+    if(!el) return;
+    const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    el.style.height = h + 'px';
+  }
+  sizeApp();
+  window.addEventListener('resize', sizeApp);
+  window.addEventListener('orientationchange', ()=> setTimeout(sizeApp, 300));
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) setTimeout(sizeApp, 50); });
+  if(window.visualViewport){ window.visualViewport.addEventListener('resize', sizeApp); }
+
   // ---------- datos de relleno ----------
   const POOLS = {
     objetos: ["Llave","Reloj","Botella","Cuaderno","Paraguas","Espejo","Vela","Lámpara","Silla","Taza","Sombrero","Guantes","Maleta","Cartera","Bufanda","Cinturón","Zapato","Bolígrafo","Cámara","Radio","Cojín","Manta","Jarrón","Cesta","Escoba","Martillo","Tijeras","Peine","Cepillo","Toalla"],
@@ -1856,4 +1873,4 @@ if(!window.storage){
 })();
 </script>
 </body>
-</html
+</html>
