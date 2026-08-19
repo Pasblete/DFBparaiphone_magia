@@ -16,7 +16,10 @@
     overflow:hidden;
   }
   #app{
-    position:fixed; top:0; left:0; right:0; bottom:0;
+    position:relative;
+    width:100%;
+    height:100dvh;
+    height:var(--app-height, 100dvh);
     overflow:hidden;
     background: linear-gradient(160deg,#1c1c3a 0%, #0d0d20 55%, #000 100%);
   }
@@ -300,6 +303,21 @@
 
   #app.hide-chrome .dots,
   #app.hide-chrome .dock{ display:none; }
+
+  #app.reset-flash::after{
+    content:"";
+    position:absolute; inset:0;
+    background:#fff;
+    opacity:0.55;
+    z-index:200;
+    pointer-events:none;
+    animation: resetFade 0.22s ease-out;
+  }
+  @keyframes resetFade{
+    from{ opacity:0.55; }
+    to{ opacity:0; }
+  }
+
   .screen.has-shot{ background-size:100% 100%; background-position:center; background-repeat:no-repeat; }
   .screen.has-shot .icon{ display:none; }
   .notes-hotspot{
@@ -497,7 +515,10 @@
         <img id="calibrateImg">
         <div id="calibrateMarkersLayer"></div>
       </div>
-      <button class="btn-secondary" id="calibrateResetBtn" style="margin-top:8px; width:100%;">Reiniciar esta calibración</button>
+      <div class="config-actions" style="margin-top:8px;">
+        <button class="btn-secondary" id="calibrateResetBtn">Reiniciar esta calibración</button>
+        <button class="btn-primary" id="calibrateSaveBtn">Guardar calibración</button>
+      </div>
     </div>
 
     <button class="btn-secondary" id="clearShotsBtn" style="margin-top:10px; width:100%;">Quitar capturas (volver a iconos genéricos)</button>
@@ -566,14 +587,12 @@ if(!window.storage){
 
 (function(){
   // Corrige un fallo conocido de Safari en modo "añadido a inicio": al arrancar,
-  // a veces calcula mal la altura visible real hasta que se dispara algún evento
-  // de resize/scroll — eso dejaba una franja negra abajo. Forzamos el alto exacto
-  // por JS y lo recalculamos ante cualquier cambio de viewport.
+  // a veces la unidad dvh no refleja aún la altura visible real, dejando una
+  // franja negra abajo. Guardamos la altura real en una variable CSS de respaldo
+  // (--app-height) que #app usa si dvh falla, y la recalculamos solo en momentos
+  // seguros (nunca cuando aparece/desaparece el teclado, para no romper la edición).
   function sizeApp(){
-    const el = document.getElementById('app');
-    if(!el) return;
-    const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-    el.style.height = h + 'px';
+    document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
   }
   sizeApp();
   // el lanzamiento "standalone" a veces tarda en asentar la altura real: reintentamos
@@ -956,14 +975,15 @@ if(!window.storage){
       vibrate(10);
       updateReadout();
       goToPage(currentPage - 1);
-    } else if(Math.abs(dx) > 5){
+    } else if(Math.abs(dx) > 14){
       // arrastre real pero insuficiente para cambiar de pantalla: volver a encajar
       screensEl.style.transition = 'transform 0.35s cubic-bezier(0.22,0.61,0.36,1)';
       goToPage(currentPage);
     }
-    // si apenas hubo movimiento (dx casi 0), es un toque simple: no tocamos el transform
-    // en absoluto, para no interferir con el clic nativo del icono/zona que se haya tocado.
-    if(Math.abs(dx) <= 5 && currentPage < notesPageIndex){
+    // un dedo real casi nunca se queda perfectamente quieto: tratamos cualquier
+    // movimiento pequeño (hasta 14px) como "toque simple", para no perder el clic
+    // nativo del icono/zona tocada ni el conteo de toques del reinicio rápido.
+    if(Math.abs(dx) <= 14){
       registerTapForQuickReset();
     }
   });
@@ -985,6 +1005,8 @@ if(!window.storage){
     digits = [];
     vibrate([15,40,15]);
     goToPage(0);
+    appEl.classList.add('reset-flash');
+    setTimeout(()=> appEl.classList.remove('reset-flash'), 220);
   }
 
   // long-press para abrir config
@@ -1330,32 +1352,53 @@ if(!window.storage){
     });
   }
 
-  calibrateImg.addEventListener('click', async (e)=>{
+  function calibrateTapAt(clientX, clientY){
     const rect = calibrateImg.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
+    const x = (clientX - rect.left) / rect.width;
+    const y = (clientY - rect.top) / rect.height;
     if(calibrationMode === 'hotspot'){
       notesHotspots[forceMode] = {x, y};
       renderHotspotMarker();
       applyShots();
-      try{ await window.storage.set('oraculo-hotspot-' + forceMode, JSON.stringify(notesHotspots[forceMode]), false); }catch(e2){}
+      statusMsg.textContent = 'Punto de Notas actualizado. Pulsa "Guardar calibración" para fijarlo.';
     } else if(calibrationMode === 'digits'){
       if(calibrationDigitsTemp.length >= 10){
-        statusMsg.textContent = 'Ya tienes los 10 dígitos. Pulsa "Reiniciar" si quieres repetir.';
+        statusMsg.textContent = 'Ya tienes 10 puntos. Pulsa "Reiniciar" si quieres repetir, o "Guardar calibración" si ya está bien.';
         return;
       }
       calibrationDigitsTemp.push({x, y});
       renderDigitMarkers();
       calibrateInstructions.textContent = `Toca, en orden, 10 iconos para los dígitos 0 a 9. Llevas ${calibrationDigitsTemp.length}/10.`;
-      if(calibrationDigitsTemp.length === 10){
-        setDigitZonesFor(calibrationScreenIndex, calibrationDigitsTemp.slice());
-        try{
-          await window.storage.set('oraculo-digitzones-' + forceMode + '-' + calibrationScreenIndex, JSON.stringify(calibrationDigitsTemp), false);
-        }catch(e2){}
-        statusMsg.textContent = 'Calibración de dígitos guardada.';
-        setTimeout(()=> statusMsg.textContent = '', 1200);
-      }
     }
+  }
+
+  calibrateImg.addEventListener('touchend', (e)=>{
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    calibrateTapAt(t.clientX, t.clientY);
+  });
+  // click como respaldo (por si se prueba desde un ordenador/trackpad)
+  calibrateImg.addEventListener('click', (e)=>{
+    calibrateTapAt(e.clientX, e.clientY);
+  });
+
+  document.getElementById('calibrateSaveBtn').addEventListener('click', async ()=>{
+    if(calibrationMode === 'hotspot'){
+      try{ await window.storage.set('oraculo-hotspot-' + forceMode, JSON.stringify(notesHotspots[forceMode]), false); }catch(e){}
+      statusMsg.textContent = 'Punto de Notas guardado.';
+    } else if(calibrationMode === 'digits'){
+      if(calibrationDigitsTemp.length !== 10){
+        statusMsg.textContent = `Necesitas marcar los 10 dígitos antes de guardar (llevas ${calibrationDigitsTemp.length}).`;
+        return;
+      }
+      setDigitZonesFor(calibrationScreenIndex, calibrationDigitsTemp.slice());
+      try{
+        await window.storage.set('oraculo-digitzones-' + forceMode + '-' + calibrationScreenIndex, JSON.stringify(calibrationDigitsTemp), false);
+      }catch(e){}
+      statusMsg.textContent = 'Calibración de dígitos guardada.';
+      renderPracticeOverlay();
+    }
+    setTimeout(()=> statusMsg.textContent = '', 1500);
   });
 
   document.getElementById('calibrateResetBtn').addEventListener('click', async ()=>{
