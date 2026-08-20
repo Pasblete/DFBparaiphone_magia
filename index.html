@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0d0d20">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -120,7 +120,7 @@
     transition: transform 0.32s ease;
     font-family: -apple-system, 'SF Pro Text', Helvetica, Arial, sans-serif;
     --n-bg:#ffffff; --n-groupbg:#f2f1f6; --n-bar:#f7f6fa; --n-text:#1c1c1e; --n-sub:#8e8e93;
-    --n-border:#e2e0e6; --n-accent:#c9970a; --n-icon:#d5a021; --n-icon-dis:#c7c7cc;
+    --n-border:#e2e0e6; --n-accent:#d9a521; --n-icon:#d9a521; --n-icon-dis:#c7c7cc;
   }
   .notes-list-screen{ z-index:35; }
   .notes-screen{ z-index:40; }
@@ -149,7 +149,7 @@
     padding: 4px 18px 30px;
   }
   .n-meta{
-    font-size:13px; color:var(--n-sub); text-align:center; margin: 2px 0 6px;
+    font-size:13px; color:var(--n-sub); text-align:left; margin: 8px 0 4px;
   }
   .n-title{
     color:var(--n-text); font-size:34px; font-weight:700;
@@ -370,7 +370,7 @@
     <div class="n-navbar">
       <div class="n-back" id="notesBack">‹ Notas</div>
       <div class="n-navicons">
-        <span>⬆</span><span>⋯</span>
+        <span>↶</span><span class="disabled">↷</span><span>⬆</span><span>⋯</span>
       </div>
       <div class="n-ok-btn" id="notesOkBtn">OK</div>
     </div>
