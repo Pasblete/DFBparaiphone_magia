@@ -562,8 +562,7 @@
 </div>
 
 <script>
-// Compatibilidad: si la app se abre fuera del entorno de Claude (GitHub Pages, Safari normal, etc.),
-// no existe window.storage — lo sustituimos por un almacenamiento equivalente basado en localStorage.
+// Compatibilidad: almacenamiento basado en localStorage
 if(!window.storage){
   window.storage = {
     async get(key){
@@ -604,7 +603,7 @@ if(!window.storage){
     colores: ["Rojo carmesí","Azul cobalto","Verde esmeralda","Amarillo mostaza","Violeta","Naranja quemado","Rosa palo","Turquesa","Gris perla","Dorado","Plateado","Marrón tierra","Beige","Coral","Índigo","Magenta","Oliva","Borgoña","Cian","Lavanda"]
   };
 
-  // ---------- iconos de las pantallas (genéricos) ----------
+  // ---------- iconos de las pantallas ----------
   const ICONS = {
     a: [
       ["Mensajes","#3ddc4a","💬"],["Calendario","#fff","📅"],["Fotos","#ff6b81","🌸"],["Cámara","#2c2c2e","📷"],
@@ -708,7 +707,7 @@ if(!window.storage){
   let currentPage = 0;
   let digits = [];
   let practiceMode = false;
-  let forceMode = 'single'; // 'single' | 'double' | 'double-same'
+  let forceMode = 'single';
   let forcedItemText = '';
   let selectedList = 'builtin:objetos';
   let forcedNoteTitle = 'Lista';
@@ -723,14 +722,14 @@ if(!window.storage){
   let selectedListSame = 'builtin:objetos';
   let forcedNoteTitleSame = 'Lista', forcedNoteDateSame = 'Hoy';
   let forcedNoteOrderSame = 0;
-  let customLists = {}; // nombre -> array de items
+  let customLists = {};
   let shotSets = {
     single: {1:null, 2:null, 3:null},
     double: {1:null, 2:null, 3:null, 4:null, 5:null},
     'double-same': {1:null, 2:null, 3:null, 4:null, 5:null}
   };
   let notesHotspots = { single:{x:0.5,y:0.5}, double:{x:0.5,y:0.5}, 'double-same':{x:0.5,y:0.5} };
-  let digitZones = { single:{}, double:{}, 'double-same':{} }; // digitZones[mode][screenIndex] = [{x,y} x10] | undefined
+  let digitZones = { single:{}, double:{}, 'double-same':{} };
   let notesDarkMode = false;
 
   function currentShots(){ return shotSets[forceMode]; }
@@ -740,7 +739,7 @@ if(!window.storage){
     if(val) digitZones[forceMode][screenIndex] = val;
     else delete digitZones[forceMode][screenIndex];
   }
-  let decoyNotes = []; // {id, title, dateText, body, order}
+  let decoyNotes = [];
 
   const BUILTIN_LABELS = {
     objetos: 'Objetos cotidianos', animales: 'Animales', cartas: 'Cartas de baraja',
@@ -832,21 +831,18 @@ if(!window.storage){
     });
     try{
       const names = (await getListIndex()).filter(n=>n!==name);
-      await window.storage.set('oraculo-list-index', JSON.stringify(names), false);
+      await window.storage.set('oraculo-list-index', JSON.stringify(names));
     }catch(e){}
     refreshAllListSelects();
     refreshCustomListsManager();
   }
 
-  // (se ha quitado el reloj falso: ahora se usa la barra de estado real del sistema)
-
   const readout = document.getElementById('readout');
 
   function renderPracticeOverlay(){
-    // limpiar overlays anteriores de cualquier pantalla
     document.querySelectorAll('.practice-live-overlay').forEach(el => el.remove());
     if(!practiceMode) return;
-    if(currentPage >= notesPageIndex) return; // en la pantalla de Notas no hay dígito que marcar
+    if(currentPage >= notesPageIndex) return;
     const screenEl = document.getElementById('screen' + (currentPage + 1));
     if(!screenEl) return;
 
@@ -854,7 +850,6 @@ if(!window.storage){
     overlay.className = 'practice-live-overlay';
     const zones = digitZonesFor(currentPage + 1);
     if(zones && zones.length === 10){
-      // ya calibrado con iconos reales: mostrar esos 10 puntos exactos
       zones.forEach((p, idx)=>{
         const m = document.createElement('div');
         m.className = 'cal-marker';
@@ -864,7 +859,6 @@ if(!window.storage){
         overlay.appendChild(m);
       });
     } else {
-      // sin calibrar todavía: franjas por columnas, como respaldo
       for(let i=0;i<10;i++){
         const z = document.createElement('div');
         z.className = 'practice-zone-strip';
@@ -908,12 +902,6 @@ if(!window.storage){
     if(navigator.vibrate){ try{ navigator.vibrate(ms); }catch(e){} }
   }
 
-  // ---------- navegación por scroll nativo (scroll-snap) ----------
-  // El carrusel de pantallas ahora se desliza con el scroll real del navegador
-  // (más fiable en iOS que animar "transform" a mano). Capturamos el dígito al
-  // EMPEZAR el gesto (como antes) y, cuando el scroll nativo termina de encajar
-  // en una pantalla, comparamos con la pantalla de la que partíamos para saber
-  // si fue swipe hacia delante (capturar dígito) o hacia atrás (olvidarlo).
   let startX = null, startY = null;
   let startZone = null;
   let pageBeforeGesture = 0;
@@ -929,7 +917,6 @@ if(!window.storage){
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     pageBeforeGesture = currentPage;
-    // solo hace falta calcular una zona/dígito si el gesto puede acabar siendo un swipe hacia delante
     startZone = (currentPage < notesPageIndex) ? digitFromTouch(currentPage + 1, startX, startY) : null;
   }, {passive:true});
 
@@ -937,9 +924,6 @@ if(!window.storage){
     const endX = e.changedTouches[0].clientX;
     const endY = e.changedTouches[0].clientY;
     const dx = endX - startX, dy = endY - startY;
-    // un dedo real casi nunca se queda perfectamente quieto: tratamos cualquier
-    // movimiento pequeño como "toque simple", para no perder el clic nativo del
-    // icono/zona tocada ni el conteo de toques del reinicio rápido.
     if(Math.abs(dx) <= 14 && Math.abs(dy) <= 14){
       registerTapForQuickReset();
     }
@@ -952,11 +936,9 @@ if(!window.storage){
       const newPage = Math.max(0, Math.min(totalScreens-1, Math.round(screensEl.scrollLeft / window.innerWidth)));
       if(newPage !== pageBeforeGesture){
         if(newPage > pageBeforeGesture && pageBeforeGesture < notesPageIndex){
-          // swipe hacia delante: usar el dígito capturado al empezar el gesto
           digits[pageBeforeGesture] = startZone;
           vibrate(15);
         } else if(newPage < pageBeforeGesture && pageBeforeGesture > 0){
-          // swipe hacia atrás: "olvida" el dígito de la pantalla que se abandona
           digits[newPage] = null;
           vibrate(10);
         }
@@ -990,7 +972,6 @@ if(!window.storage){
     setTimeout(()=> appEl.classList.remove('reset-flash'), 220);
   }
 
-  // long-press para abrir config
   let pressTimer = null;
   appEl.addEventListener('touchstart', ()=>{
     pressTimer = setTimeout(openConfig, 1000);
@@ -1004,15 +985,6 @@ if(!window.storage){
     if(d1===undefined || d2===undefined || d1===null || d2===null) return null;
     if(d1 === 0 && d2 === 0) return 100;
     return d1 * 10 + d2;
-  }
-
-  function shuffle(arr){
-    const a = arr.slice();
-    for(let i=a.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [a[i],a[j]] = [a[j],a[i]];
-    }
-    return a;
   }
 
   function renderNoteFrame(title, dateMeta){
@@ -1088,11 +1060,6 @@ if(!window.storage){
     document.getElementById('notesScreen').classList.remove('open');
   });
 
-  // Edición real: al enfocar el título o el cuerpo, aparece el teclado auténtico
-  // del iPhone y cambiamos la barra de navegación a modo edición (botón OK).
-  // También ocultamos nuestra barra de iconos inferior: intentar que "flote" pegada
-  // al teclado real no es fiable en una web, así que mejor la quitamos de en medio
-  // mientras se escribe (igual que la vista de lista tampoco la muestra).
   const notesNavIcons = document.querySelector('#notesScreen .n-navicons');
   const notesOkBtn = document.getElementById('notesOkBtn');
   const notesBottombar = document.querySelector('#notesScreen .n-bottombar');
@@ -1240,7 +1207,7 @@ if(!window.storage){
     });
   }
 
-  let calibrationMode = null; // 'hotspot' | 'digits'
+  let calibrationMode = null;
   let calibrationScreenIndex = null;
   let calibrationDigitsTemp = [];
   const calibrateInstructions = document.getElementById('calibrateInstructions');
@@ -1324,7 +1291,7 @@ if(!window.storage){
         currentShots()[i] = dataUrl;
         refreshShotThumbs();
         applyShots();
-        try{ await window.storage.set('oraculo-shot-' + forceMode + '-' + i, dataUrl, false); }catch(e){}
+        try{ await window.storage.set('oraculo-shot-' + forceMode + '-' + i, dataUrl); }catch(e){}
         statusMsg.textContent = 'Captura ' + i + ' cargada. Pulsa "Calibrar" para ajustarla.';
         setTimeout(()=> statusMsg.textContent = '', 1800);
       }catch(e){
@@ -1358,14 +1325,13 @@ if(!window.storage){
     const t = e.changedTouches[0];
     calibrateTapAt(t.clientX, t.clientY);
   });
-  // click como respaldo (por si se prueba desde un ordenador/trackpad)
   calibrateImg.addEventListener('click', (e)=>{
     calibrateTapAt(e.clientX, e.clientY);
   });
 
   document.getElementById('calibrateSaveBtn').addEventListener('click', async ()=>{
     if(calibrationMode === 'hotspot'){
-      try{ await window.storage.set('oraculo-hotspot-' + forceMode, JSON.stringify(notesHotspots[forceMode]), false); }catch(e){}
+      try{ await window.storage.set('oraculo-hotspot-' + forceMode, JSON.stringify(notesHotspots[forceMode])); }catch(e){}
       statusMsg.textContent = 'Punto de Notas guardado.';
     } else if(calibrationMode === 'digits'){
       if(calibrationDigitsTemp.length !== 10){
@@ -1374,7 +1340,7 @@ if(!window.storage){
       }
       setDigitZonesFor(calibrationScreenIndex, calibrationDigitsTemp.slice());
       try{
-        await window.storage.set('oraculo-digitzones-' + forceMode + '-' + calibrationScreenIndex, JSON.stringify(calibrationDigitsTemp), false);
+        await window.storage.set('oraculo-digitzones-' + forceMode + '-' + calibrationScreenIndex, JSON.stringify(calibrationDigitsTemp));
       }catch(e){}
       statusMsg.textContent = 'Calibración de dígitos guardada.';
       renderPracticeOverlay();
@@ -1386,7 +1352,7 @@ if(!window.storage){
     if(calibrationMode === 'digits'){
       calibrationDigitsTemp = [];
       setDigitZonesFor(calibrationScreenIndex, null);
-      try{ await window.storage.delete('oraculo-digitzones-' + forceMode + '-' + calibrationScreenIndex, false); }catch(e){}
+      try{ await window.storage.delete('oraculo-digitzones-' + forceMode + '-' + calibrationScreenIndex); }catch(e){}
       renderDigitMarkers();
       calibrateInstructions.textContent = 'Toca, en orden, 10 iconos para los dígitos 0 a 9. Llevas 0/10.';
     } else if(calibrationMode === 'hotspot'){
@@ -1403,8 +1369,8 @@ if(!window.storage){
     refreshShotThumbs();
     calibrateWrap.style.display = 'none';
     for(let i=1;i<=5;i++){
-      try{ await window.storage.delete('oraculo-shot-' + forceMode + '-' + i, false); }catch(e){}
-      try{ await window.storage.delete('oraculo-digitzones-' + forceMode + '-' + i, false); }catch(e){}
+      try{ await window.storage.delete('oraculo-shot-' + forceMode + '-' + i); }catch(e){}
+      try{ await window.storage.delete('oraculo-digitzones-' + forceMode + '-' + i); }catch(e){}
     }
     applyShots();
     statusMsg.textContent = 'Capturas de este modo eliminadas.';
@@ -1500,10 +1466,10 @@ if(!window.storage){
     customLists[name] = items;
     selectedList = 'custom:' + name;
     try{
-      await window.storage.set('oraculo-list-' + name, JSON.stringify(items), false);
+      await window.storage.set('oraculo-list-' + name, JSON.stringify(items));
       const names = Array.from(new Set([...(await getListIndex()), name]));
-      await window.storage.set('oraculo-list-index', JSON.stringify(names), false);
-    }catch(e){ /* se queda solo en esta sesión */ }
+      await window.storage.set('oraculo-list-index', JSON.stringify(names));
+    }catch(e){}
     listEditor.style.display = 'none';
     refreshAllListSelects();
     refreshCustomListsManager();
@@ -1583,7 +1549,7 @@ if(!window.storage){
 
   async function commitNoteOrder(){
     const rows = Array.from(noteManagerList.querySelectorAll('.note-manager-row'));
-    const baseOffset = 1000; // por encima de cualquier orden de nota forzada
+    const baseOffset = 1000;
     rows.forEach((row, idx)=>{
       const note = decoyNotes.find(n => n.id === row.dataset.id);
       if(note) note.order = baseOffset + idx;
@@ -1607,11 +1573,11 @@ if(!window.storage){
   async function persistDecoyNotes(){
     try{
       const ids = decoyNotes.map(n=>n.id);
-      await window.storage.set('oraculo-notes-index', JSON.stringify(ids), false);
+      await window.storage.set('oraculo-notes-index', JSON.stringify(ids));
       for(const note of decoyNotes){
-        await window.storage.set('oraculo-note-' + note.id, JSON.stringify(note), false);
+        await window.storage.set('oraculo-note-' + note.id, JSON.stringify(note));
       }
-    }catch(e){ /* se queda solo en esta sesión */ }
+    }catch(e){}
   }
 
   document.getElementById('saveNoteBtn').addEventListener('click', async ()=>{
@@ -1645,8 +1611,8 @@ if(!window.storage){
   async function deleteDecoyNote(id){
     decoyNotes = decoyNotes.filter(n=>n.id!==id);
     try{
-      await window.storage.set('oraculo-notes-index', JSON.stringify(decoyNotes.map(n=>n.id)), false);
-      await window.storage.delete('oraculo-note-' + id, false);
+      await window.storage.set('oraculo-notes-index', JSON.stringify(decoyNotes.map(n=>n.id)));
+      await window.storage.delete('oraculo-note-' + id);
     }catch(e){}
     refreshNoteManagerList();
   }
@@ -1677,22 +1643,22 @@ if(!window.storage){
         forcedNoteTitleA, forcedNoteTitleB, forcedNoteDateA, forcedNoteDateB,
         forcedItemTextSameA, forcedItemTextSameB, selectedListSame,
         forcedNoteTitleSame, forcedNoteDateSame, notesDarkMode
-      }), false);
+      }));
     }catch(e){}
 
     try{
       const names = Object.keys(customLists);
       for(const name of names){
-        await window.storage.set('oraculo-list-' + name, JSON.stringify(customLists[name]), false);
+        await window.storage.set('oraculo-list-' + name, JSON.stringify(customLists[name]));
       }
-      await window.storage.set('oraculo-list-index', JSON.stringify(names), false);
+      await window.storage.set('oraculo-list-index', JSON.stringify(names));
     }catch(e){}
 
     try{
       const ids = decoyNotes.map(n => n.id);
-      await window.storage.set('oraculo-notes-index', JSON.stringify(ids), false);
+      await window.storage.set('oraculo-notes-index', JSON.stringify(ids));
       for(const note of decoyNotes){
-        await window.storage.set('oraculo-note-' + note.id, JSON.stringify(note), false);
+        await window.storage.set('oraculo-note-' + note.id, JSON.stringify(note));
       }
     }catch(e){}
 
@@ -1701,16 +1667,16 @@ if(!window.storage){
       for(let i=1;i<=maxSlots;i++){
         try{
           if(shotSets[mode] && shotSets[mode][i]){
-            await window.storage.set('oraculo-shot-' + mode + '-' + i, shotSets[mode][i], false);
+            await window.storage.set('oraculo-shot-' + mode + '-' + i, shotSets[mode][i]);
           }
           if(digitZones[mode] && digitZones[mode][i]){
-            await window.storage.set('oraculo-digitzones-' + mode + '-' + i, JSON.stringify(digitZones[mode][i]), false);
+            await window.storage.set('oraculo-digitzones-' + mode + '-' + i, JSON.stringify(digitZones[mode][i]));
           }
         }catch(e){}
       }
       try{
         if(notesHotspots[mode]){
-          await window.storage.set('oraculo-hotspot-' + mode, JSON.stringify(notesHotspots[mode]), false);
+          await window.storage.set('oraculo-hotspot-' + mode, JSON.stringify(notesHotspots[mode]));
         }
       }catch(e){}
     }
@@ -1835,7 +1801,7 @@ if(!window.storage){
         forcedItemTextSameA, forcedItemTextSameB, selectedListSame,
         forcedNoteTitleSame, forcedNoteDateSame,
         notesDarkMode
-      }), false);
+      }));
       statusMsg.textContent = 'Guardado.';
     }catch(e){
       statusMsg.textContent = 'Guardado solo para esta sesión.';
@@ -1848,7 +1814,7 @@ if(!window.storage){
 
   async function getListIndex(){
     try{
-      const idx = await window.storage.get('oraculo-list-index', false);
+      const idx = await window.storage.get('oraculo-list-index');
       if(idx && idx.value) return JSON.parse(idx.value);
     }catch(e){}
     return [];
@@ -1856,7 +1822,7 @@ if(!window.storage){
 
   async function loadConfig(){
     try{
-      const saved = await window.storage.get('oraculo-config', false);
+      const saved = await window.storage.get('oraculo-config');
       if(saved && saved.value){
         const parsed = JSON.parse(saved.value);
         forceMode = parsed.forceMode || 'single';
@@ -1879,41 +1845,41 @@ if(!window.storage){
         forcedNoteDateSame = parsed.forcedNoteDateSame || 'Hoy';
         notesDarkMode = !!parsed.notesDarkMode;
       }
-    }catch(e){ /* sin datos guardados aún */ }
+    }catch(e){}
 
     try{
       const names = await getListIndex();
       for(const name of names){
-        const item = await window.storage.get('oraculo-list-' + name, false);
+        const item = await window.storage.get('oraculo-list-' + name);
         if(item && item.value) customLists[name] = JSON.parse(item.value);
       }
-    }catch(e){ /* sin listas guardadas aún */ }
+    }catch(e){}
 
     try{
-      const idx = await window.storage.get('oraculo-notes-index', false);
+      const idx = await window.storage.get('oraculo-notes-index');
       const ids = (idx && idx.value) ? JSON.parse(idx.value) : [];
       for(const id of ids){
-        const item = await window.storage.get('oraculo-note-' + id, false);
+        const item = await window.storage.get('oraculo-note-' + id);
         if(item && item.value) decoyNotes.push(JSON.parse(item.value));
       }
-    }catch(e){ /* sin notas señuelo guardadas aún */ }
+    }catch(e){}
 
     for(const mode of ['single','double','double-same']){
       const maxSlots = mode==='single' ? 3 : 5;
       for(let i=1;i<=maxSlots;i++){
         try{
-          const shot = await window.storage.get('oraculo-shot-' + mode + '-' + i, false);
+          const shot = await window.storage.get('oraculo-shot-' + mode + '-' + i);
           if(shot && shot.value) shotSets[mode][i] = shot.value;
-        }catch(e){ /* sin captura guardada */ }
+        }catch(e){}
         try{
-          const dz = await window.storage.get('oraculo-digitzones-' + mode + '-' + i, false);
+          const dz = await window.storage.get('oraculo-digitzones-' + mode + '-' + i);
           if(dz && dz.value) digitZones[mode][i] = JSON.parse(dz.value);
-        }catch(e){ /* sin calibración guardada */ }
+        }catch(e){}
       }
       try{
-        const hs = await window.storage.get('oraculo-hotspot-' + mode, false);
+        const hs = await window.storage.get('oraculo-hotspot-' + mode);
         if(hs && hs.value) notesHotspots[mode] = JSON.parse(hs.value);
-      }catch(e){ /* sin hotspot guardado, se usa el centro por defecto */ }
+      }catch(e){}
     }
 
     buildHomeScreens();
