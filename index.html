@@ -5,21 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Oráculo · Pantalla falsa</title>
 <style>
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; touch-action:manipulation;}
-  html,body{
+  html{
     margin:0; padding:0; height:100%;
+    background:#000;
+  }
+  body{
+    margin:0; padding:0;
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    width:100%; height:100%;
     background:#000;
     font-family: -apple-system, 'SF Pro Text', Helvetica, Arial, sans-serif;
     overflow:hidden;
   }
   #app{
-    position:relative;
-    width:100%;
-    height:100dvh;
-    height:var(--app-height, 100dvh);
+    position:absolute;
+    inset:0;
     overflow:hidden;
     background: linear-gradient(160deg,#1c1c3a 0%, #0d0d20 55%, #000 100%);
   }
@@ -586,26 +594,6 @@ if(!window.storage){
 }
 
 (function(){
-  // Corrige un fallo conocido de Safari en modo "añadido a inicio": al arrancar,
-  // a veces la unidad dvh no refleja aún la altura visible real, dejando una
-  // franja negra abajo. Guardamos la altura real en una variable CSS de respaldo
-  // (--app-height) que #app usa si dvh falla, y la recalculamos solo en momentos
-  // seguros (nunca cuando aparece/desaparece el teclado, para no romper la edición).
-  function sizeApp(){
-    document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
-  }
-  sizeApp();
-  // el lanzamiento "standalone" a veces tarda en asentar la altura real: reintentamos
-  // varias veces en el primer segundo por si el primer cálculo llega demasiado pronto.
-  [100, 300, 600, 1000].forEach(ms => setTimeout(sizeApp, ms));
-  window.addEventListener('load', sizeApp);
-  window.addEventListener('pageshow', sizeApp);
-  window.addEventListener('orientationchange', ()=> setTimeout(sizeApp, 300));
-  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) setTimeout(sizeApp, 50); });
-  // OJO: a propósito NO escuchamos 'resize' ni visualViewport 'resize' aquí — esos
-  // también se disparan cuando aparece/desaparece el teclado al editar una nota, y
-  // recalcular la altura justo entonces dejaba un hueco negro momentáneo bajo el texto.
-
   // ---------- datos de relleno ----------
   const POOLS = {
     objetos: ["Llave","Reloj","Botella","Cuaderno","Paraguas","Espejo","Vela","Lámpara","Silla","Taza","Sombrero","Guantes","Maleta","Cartera","Bufanda","Cinturón","Zapato","Bolígrafo","Cámara","Radio","Cojín","Manta","Jarrón","Cesta","Escoba","Martillo","Tijeras","Peine","Cepillo","Toalla"],
