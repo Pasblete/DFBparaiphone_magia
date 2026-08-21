@@ -116,6 +116,7 @@
     position:absolute; inset:0;
     display:flex; flex-direction:column;
     padding-top: env(safe-area-inset-top, 24px);
+    background: var(--n-bg);
     transform: translateX(100%);
     transition: transform 0.32s ease;
     font-family: -apple-system, 'SF Pro Text', Helvetica, Arial, sans-serif;
@@ -141,6 +142,9 @@
   }
   .n-navicons{ display:flex; align-items:center; gap:20px; color:var(--n-accent); font-size:16px; }
   .n-navicons span.disabled{ color:var(--n-icon-dis); }
+  .n-svg-icon{ display:inline-flex; color:inherit; }
+  .n-svg-icon svg{ width:21px; height:21px; display:block; }
+  .n-bottombar .n-svg-icon svg{ width:22px; height:22px; }
   .n-ok-btn{ color:var(--n-accent); font-size:17px; font-weight:600; display:none; }
 
   .n-body{
@@ -370,7 +374,16 @@
     <div class="n-navbar">
       <div class="n-back" id="notesBack">‹ Notas</div>
       <div class="n-navicons">
-        <span>↶</span><span class="disabled">↷</span><span>⬆</span><span>⋯</span>
+        <span class="n-svg-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 8 L5 11.5 L9 15" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11.5 H14 a5.5 5.5 0 0 1 5.5 5.5 v1.5" stroke-linecap="round"/></svg>
+        </span>
+        <span class="n-svg-icon disabled">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 8 L19 11.5 L15 15" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 11.5 H10 a5.5 5.5 0 0 0 -5.5 5.5 v1.5" stroke-linecap="round"/></svg>
+        </span>
+        <span class="n-svg-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 V15" stroke-linecap="round"/><path d="M8 7 L12 3 L16 7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 12 v6 a2 2 0 0 0 2 2 h8 a2 2 0 0 0 2 -2 v-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span>⋯</span>
       </div>
       <div class="n-ok-btn" id="notesOkBtn">OK</div>
     </div>
@@ -380,7 +393,21 @@
       <div id="notesList" class="n-content-body" contenteditable="true"></div>
     </div>
     <div class="n-bottombar">
-      <span>☑</span><span>📎</span><span>Ⓐ</span><span style="color:#0a84ff;">🌀</span><span>🖉</span>
+      <span class="n-svg-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/><line x1="10.5" y1="8" x2="19" y2="8"/><line x1="10.5" y1="12" x2="19" y2="12"/><line x1="10.5" y1="16" x2="19" y2="16"/><circle cx="8" cy="16" r="1.3" fill="currentColor" stroke="none"/></svg>
+      </span>
+      <span class="n-svg-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 4 L4 9 L8 14" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9 H14 a5 5 0 0 1 5 5 v0 a5 5 0 0 1 -5 5 H10" stroke-linecap="round"/></svg>
+      </span>
+      <span class="n-svg-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><text x="12" y="16.5" text-anchor="middle" font-size="11" fill="currentColor" stroke="none" font-family="Georgia,serif">A</text></svg>
+      </span>
+      <span class="n-svg-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 17 L15 6 a2.1 2.1 0 0 1 3 3 L7 20 L3 21 Z" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      </span>
+      <span class="n-svg-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 15 L9.8 12 L15.5 6.3 a1.5 1.5 0 0 1 2.2 2.2 L12 14.2 Z" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      </span>
     </div>
   </div>
 </div>
