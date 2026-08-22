@@ -19,6 +19,7 @@
     background:#000;
     font-family: -apple-system, 'SF Pro Text', Helvetica, Arial, sans-serif;
     overflow:hidden;
+    overscroll-behavior: none;
   }
   #app{
     position:relative;
@@ -121,7 +122,7 @@
     background: var(--n-bg);
     transform: translateX(100%);
     transition: transform 0.32s ease;
-    font-family: -apple-system, 'SF Pro Text', Helvetica, Arial, sans-serif;
+    font-family: ui-rounded, -apple-system, 'SF Pro Rounded', 'SF Pro Text', Helvetica, Arial, sans-serif;
   }
   .notes-list-screen{ z-index:35; }
   .notes-screen{ z-index:40; }
@@ -135,6 +136,10 @@
     height:44px; background:var(--n-bar);
     display:flex; align-items:center; justify-content:space-between;
     padding:0 14px;
+    position:relative; z-index:5;
+    transform: translateZ(0);
+    will-change: transform;
+    isolation: isolate;
   }
   .notes-screen .n-navbar{ background: var(--n-bg); }
   .n-back{
@@ -146,15 +151,16 @@
   .n-svg-icon svg{ width:21px; height:21px; display:block; }
   .n-bottombar .n-svg-icon svg{ width:22px; height:22px; }
   .n-img-icon{ display:inline-flex; align-items:center; justify-content:center; }
-  .n-img-icon img{ display:block; height:26px; width:auto; }
-  .n-img-icon-nav img{ height:23px; }
+  .n-img-icon img{ display:block; height:32px; width:auto; }
+  .n-img-icon-nav img{ height:27px; }
   .n-ok-btn{ color:var(--n-accent); font-size:17px; font-weight:600; display:none; align-items:center; gap:16px; }
 
   .n-body{
     flex:1; overflow-y:auto;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     background: var(--n-bg);
-    padding: 4px 18px 30px;
+    padding: 4px 18px 78px;
   }
   .n-meta{
     font-size:13px; color:var(--n-sub); text-align:left; margin: 8px 0 4px;
@@ -167,26 +173,29 @@
   .n-content-body{ outline:none; }
   .n-line{
     display:flex; align-items:baseline; gap:6px;
-    font-size:20px; line-height:1.55; color:var(--n-text);
+    font-size:20px; line-height:1.35; color:var(--n-text);
     padding: 1px 0;
   }
   .n-line .n-num{
-    color:var(--n-text); min-width:24px; text-align:right; flex-shrink:0;
+    color:var(--n-text); min-width:34px; text-align:right; flex-shrink:0;
   }
   .n-line .n-txt{ flex:1; }
   .n-line-plain{
-    white-space:pre-wrap; font-size:20px; line-height:1.5; color:var(--n-text);
+    white-space:pre-wrap; font-size:20px; line-height:1.35; color:var(--n-text);
     outline:none; min-height:200px;
   }
 
   .n-bottombar{
-    height:46px;
+    position:absolute; left:0; right:0; bottom:0;
+    height:52px;
     padding-bottom: env(safe-area-inset-bottom, 10px);
-    background:var(--n-bar);
+    background: color-mix(in srgb, var(--n-bar) 78%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    backdrop-filter: blur(18px) saturate(1.4);
     border-top:0.5px solid var(--n-border);
     display:flex; align-items:center; justify-content:space-around;
     color:var(--n-icon); font-size:18px;
-    flex-shrink:0;
+    z-index:5;
   }
 
   .n-title[contenteditable], .n-content-body[contenteditable], .n-line-plain[contenteditable]{
@@ -209,7 +218,8 @@
     display:flex; align-items:center; gap:6px;
   }
   .n-list-body{
-    flex:1; overflow-y:auto; overscroll-behavior:contain; background:var(--n-groupbg);
+    flex:1; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; contain:paint;
+    background:var(--n-groupbg);
     padding: 0 14px;
   }
   .n-section-title{
@@ -239,7 +249,10 @@
     padding-bottom: env(safe-area-inset-bottom, 10px);
     background:var(--n-groupbg);
     display:flex; align-items:center; justify-content:center;
-    position:relative;
+    position:relative; z-index:5;
+    transform: translateZ(0);
+    will-change: transform;
+    isolation: isolate;
   }
   .n-list-footer .n-count{ color:var(--n-sub); font-size:13px; }
   .n-list-footer .n-compose{
@@ -396,8 +409,8 @@
     </div>
     <div class="n-body">
       <div class="n-meta" id="notesDate"></div>
-      <div class="n-title" id="notesTitle" contenteditable="true">Lista</div>
-      <div id="notesList" class="n-content-body" contenteditable="true"></div>
+      <div class="n-title" id="notesTitle">Lista</div>
+      <div id="notesList" class="n-content-body"></div>
     </div>
     <div class="n-bottombar">
       <span class="n-img-icon"><img src="data:image/png;base64,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" alt=""></span>
@@ -1041,6 +1054,8 @@ if(!window.storage){
 
   function renderNoteFrame(title, dateMeta){
     document.getElementById('notesTitle').textContent = title;
+    document.getElementById('notesTitle').removeAttribute('contenteditable');
+    document.getElementById('notesList').removeAttribute('contenteditable');
     document.getElementById('notesDate').textContent = dateMeta;
     document.getElementById('notesScreen').classList.toggle('dark', notesDarkMode);
     document.getElementById('notesScreen').classList.add('open');
@@ -1129,7 +1144,19 @@ if(!window.storage){
     notesNavIcons.style.display = 'flex';
     notesOkBtn.style.display = 'none';
     notesBottombar.style.display = 'flex';
+    // Devolvemos el texto a "solo lectura" en cuanto se deja de editar: el modo
+    // editable de Safari usa un camino de renderizado más pesado que puede ser
+    // la causa de que la barra inferior "arrastre" iconos durante el scroll
+    // normal, así que solo lo activamos mientras hace falta de verdad.
+    document.getElementById('notesTitle').removeAttribute('contenteditable');
+    document.getElementById('notesList').removeAttribute('contenteditable');
   }
+  function activateEditable(el){
+    el.setAttribute('contenteditable', 'true');
+    el.focus();
+  }
+  document.getElementById('notesTitle').addEventListener('click', function(){ activateEditable(this); });
+  document.getElementById('notesList').addEventListener('click', function(){ activateEditable(this); });
   document.getElementById('notesTitle').addEventListener('focus', enterEditMode);
   document.getElementById('notesList').addEventListener('focus', enterEditMode);
   document.getElementById('notesTitle').addEventListener('blur', ()=>{
@@ -1948,4 +1975,3 @@ if(!window.storage){
 </script>
 </body>
 </html>
-
