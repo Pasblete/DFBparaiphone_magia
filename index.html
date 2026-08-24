@@ -143,41 +143,41 @@
   }
   .notes-screen .n-navbar{ background: var(--n-bg); }
   .n-back{
-    color:var(--n-accent); font-size:22px; display:flex; align-items:center; gap:2px;
+    color:var(--n-accent); font-size:17px; display:flex; align-items:center; gap:2px;
   }
-  .n-navicons{ display:flex; align-items:center; gap:26px; color:var(--n-accent); font-size:16px; }
+  .n-navicons{ display:flex; align-items:center; gap:24px; color:var(--n-accent); font-size:16px; }
   .n-navicons span.disabled{ color:var(--n-icon-dis); }
   .n-svg-icon{ display:inline-flex; color:inherit; }
-  .n-svg-icon svg{ width:26px; height:26px; display:block; }
-  .n-bottombar .n-svg-icon svg{ width:28px; height:28px; }
+  .n-svg-icon svg{ width:22px; height:22px; display:block; }
+  .n-bottombar .n-svg-icon svg{ width:23px; height:23px; }
   .n-img-icon{ display:inline-flex; align-items:center; justify-content:center; }
-  .n-img-icon img{ display:block; height:44px; width:auto; }
-  .n-img-icon-nav img{ height:34px; }
-  .n-ok-btn{ color:var(--n-accent); font-size:22px; font-weight:600; display:none; align-items:center; gap:18px; }
+  .n-img-icon img{ display:block; height:24px; width:auto; }
+  .n-img-icon-nav img{ height:22px; }
+  .n-ok-btn{ color:var(--n-accent); font-size:17px; font-weight:600; display:none; align-items:center; gap:16px; }
 
   .n-body{
     flex:1; overflow-y:auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     background: var(--n-bg);
-    padding: 4px 18px 120px;
+    padding: 4px 18px 90px;
   }
   .n-meta{
-    font-size:16px; color:var(--n-sub); text-align:left; margin: 8px 0 4px;
+    font-size:15px; color:var(--n-sub); text-align:left; margin: 8px 0 4px;
   }
   .n-title{
-    color:var(--n-text); font-size:38px; font-weight:700;
+    color:#000000; font-size:34px; font-weight:700;
     margin: 4px 0 8px; line-height:1.15;
     outline:none;
   }
   .n-content-body{ outline:none; }
   .n-line{
     display:flex; align-items:baseline; gap:6px;
-    font-size:22px; line-height:1.45; color:var(--n-text);
+    font-size:17px; line-height:1.5; color:#000000;
     padding: 1px 0;
   }
   .n-line .n-num{
-    color:var(--n-text); min-width:34px; text-align:right; flex-shrink:0;
+    color:#000000; min-width:28px; text-align:right; flex-shrink:0;
   }
   .n-line .n-txt{ flex:1; }
   .n-line-plain{
@@ -201,7 +201,7 @@
 
   .notes-list-screen{ background:var(--n-groupbg); }
   .n-list-title{
-    color:var(--n-text); font-size:38px; font-weight:800;
+    color:#000000; font-size:34px; font-weight:800;
     padding: 6px 18px 8px;
   }
   .n-search{
@@ -1018,7 +1018,14 @@ if(!window.storage){
     document.getElementById('notesListScreen').classList.remove('open');
     digits = [];
     vibrate([15,40,15]);
+    // cancelamos cualquier "asentado" de scroll pendiente y forzamos la posición
+    // a 0 de inmediato — si no, el scroll nativo a veces reafirma su propia
+    // posición un instante después y deja la pantalla desplazada.
+    clearTimeout(scrollSettleTimer);
+    screensEl.scrollLeft = 0;
     goToPage(0, true);
+    requestAnimationFrame(()=>{ screensEl.scrollLeft = 0; });
+    setTimeout(()=>{ screensEl.scrollLeft = 0; }, 60);
     appEl.classList.add('reset-flash');
     setTimeout(()=> appEl.classList.remove('reset-flash'), 220);
   }
@@ -1055,6 +1062,7 @@ if(!window.storage){
     document.getElementById('notesDate').textContent = dateMeta;
     document.getElementById('notesScreen').classList.toggle('dark', notesDarkMode);
     document.getElementById('notesScreen').classList.add('open');
+    document.querySelector('#notesScreen .n-body').scrollTop = 0;
   }
 
   function forcedNoteConfig(which){
@@ -1167,20 +1175,33 @@ if(!window.storage){
     exitEditMode();
   });
 
+  function previewForPosition1(pool, forcedIndex, forcedText){
+    const text = (forcedIndex === 1) ? (forcedText || '(elemento forzado)') : (pool[0] || '(sin definir)');
+    return '1. ' + text;
+  }
+
   function allNotesSorted(){
     let forcedEntries;
     if(forceMode === 'double'){
+      const nA = getComputedNumber(0) || 0;
+      const nB = getComputedNumber(1) || 0;
       forcedEntries = [
-        { isForced:true, which:'A', order: forcedNoteOrderA, title: forcedNoteTitleA || 'Lista A', dateText: forcedNoteDateA || 'Hoy', preview: '1. ' + (forcedItemTextA ? '…' : '(sin definir)') },
-        { isForced:true, which:'B', order: forcedNoteOrderB, title: forcedNoteTitleB || 'Lista B', dateText: forcedNoteDateB || 'Hoy', preview: '1. ' + (forcedItemTextB ? '…' : '(sin definir)') }
+        { isForced:true, which:'A', order: forcedNoteOrderA, title: forcedNoteTitleA || 'Lista A', dateText: forcedNoteDateA || 'Hoy', preview: previewForPosition1(currentPool(selectedListA), nA, forcedItemTextA) },
+        { isForced:true, which:'B', order: forcedNoteOrderB, title: forcedNoteTitleB || 'Lista B', dateText: forcedNoteDateB || 'Hoy', preview: previewForPosition1(currentPool(selectedListB), nB, forcedItemTextB) }
       ];
     } else if(forceMode === 'double-same'){
+      const n1 = getComputedNumber(0) || 0;
+      const pool = currentPool(selectedListSame);
+      let preview1;
+      if(n1 === 1) preview1 = '1. ' + (forcedItemTextSameA || '(elemento forzado)');
+      else preview1 = '1. ' + (pool[0] || '(sin definir)');
       forcedEntries = [
-        { isForced:true, which:'same', order: forcedNoteOrderSame, title: forcedNoteTitleSame || 'Lista', dateText: forcedNoteDateSame || 'Hoy', preview: '1. ' + ((forcedItemTextSameA || forcedItemTextSameB) ? '…' : '(sin definir)') }
+        { isForced:true, which:'same', order: forcedNoteOrderSame, title: forcedNoteTitleSame || 'Lista', dateText: forcedNoteDateSame || 'Hoy', preview: preview1 }
       ];
     } else {
+      const n = getComputedNumber(0) || 0;
       forcedEntries = [
-        { isForced:true, which:'single', order: forcedNoteOrder, title: forcedNoteTitle || 'Lista', dateText: forcedNoteDate || 'Hoy', preview: '1. ' + (forcedItemText ? '…' : '(sin definir)') }
+        { isForced:true, which:'single', order: forcedNoteOrder, title: forcedNoteTitle || 'Lista', dateText: forcedNoteDate || 'Hoy', preview: previewForPosition1(currentPool(selectedList), n, forcedItemText) }
       ];
     }
     const combined = [...forcedEntries, ...decoyNotes];
@@ -1400,13 +1421,18 @@ if(!window.storage){
     }
   }
 
+  let lastCalibrateTouchAt = 0;
   calibrateImg.addEventListener('touchend', (e)=>{
     e.preventDefault();
+    lastCalibrateTouchAt = Date.now();
     const t = e.changedTouches[0];
     calibrateTapAt(t.clientX, t.clientY);
   });
-  // click como respaldo (por si se prueba desde un ordenador/trackpad)
+  // click como respaldo (por si se prueba desde un ordenador/trackpad) — pero si el
+  // touchend ya lo gestionó hace un instante, ignoramos el click sintético que
+  // el navegador dispara después (eso era lo que duplicaba el punto marcado).
   calibrateImg.addEventListener('click', (e)=>{
+    if(Date.now() - lastCalibrateTouchAt < 800) return;
     calibrateTapAt(e.clientX, e.clientY);
   });
 
