@@ -166,7 +166,7 @@
     font-size:15px; color:var(--n-sub); text-align:left; margin: 8px 0 4px;
   }
   .n-title{
-    color:#000000; font-size:34px; font-weight:700;
+    color:#000000; font-size:37px; font-weight:700;
     margin: 4px 0 8px; line-height:1.15;
     outline:none;
   }
@@ -177,7 +177,7 @@
     padding: 1px 0;
   }
   .n-line .n-num{
-    color:#000000; min-width:28px; text-align:right; flex-shrink:0;
+    color:#000000; min-width:28px; text-align:left; flex-shrink:0;
   }
   .n-line .n-txt{ flex:1; }
   .n-line-plain{
@@ -201,7 +201,7 @@
 
   .notes-list-screen{ background:var(--n-groupbg); }
   .n-list-title{
-    color:#000000; font-size:34px; font-weight:800;
+    color:#000000; font-size:37px; font-weight:800;
     padding: 6px 18px 8px;
   }
   .n-search{
@@ -440,7 +440,17 @@
         </div>
         <div style="flex:1;">
           <label style="margin-top:0;">Fecha a mostrar</label>
-          <input type="text" id="forcedNoteDate" placeholder="Hoy">
+          <select id="forcedNoteDaysAgo">
+            <option value="0">Hoy</option>
+            <option value="1">Ayer</option>
+            <option value="2">Hace 2 días</option>
+            <option value="3">Hace 3 días</option>
+            <option value="4">Hace 4 días</option>
+            <option value="5">Hace 5 días</option>
+            <option value="6">Hace 6 días</option>
+            <option value="exact">Fecha exacta…</option>
+          </select>
+          <input type="date" id="forcedNoteExactDate" style="display:none; margin-top:6px;">
         </div>
       </div>
       <label>Lista de relleno</label>
@@ -459,7 +469,17 @@
           </div>
           <div style="flex:1;">
             <label style="margin-top:0;">Fecha a mostrar</label>
-            <input type="text" id="forcedNoteDateA" placeholder="Hoy">
+            <select id="forcedNoteDaysAgoA">
+              <option value="0">Hoy</option>
+              <option value="1">Ayer</option>
+              <option value="2">Hace 2 días</option>
+              <option value="3">Hace 3 días</option>
+              <option value="4">Hace 4 días</option>
+              <option value="5">Hace 5 días</option>
+              <option value="6">Hace 6 días</option>
+              <option value="exact">Fecha exacta…</option>
+            </select>
+            <input type="date" id="forcedNoteExactDateA" style="display:none; margin-top:6px;">
           </div>
         </div>
         <label>Lista de relleno A</label>
@@ -477,7 +497,17 @@
           </div>
           <div style="flex:1;">
             <label style="margin-top:0;">Fecha a mostrar</label>
-            <input type="text" id="forcedNoteDateB" placeholder="Hoy">
+            <select id="forcedNoteDaysAgoB">
+              <option value="0">Hoy</option>
+              <option value="1">Ayer</option>
+              <option value="2">Hace 2 días</option>
+              <option value="3">Hace 3 días</option>
+              <option value="4">Hace 4 días</option>
+              <option value="5">Hace 5 días</option>
+              <option value="6">Hace 6 días</option>
+              <option value="exact">Fecha exacta…</option>
+            </select>
+            <input type="date" id="forcedNoteExactDateB" style="display:none; margin-top:6px;">
           </div>
         </div>
         <label>Lista de relleno B</label>
@@ -499,7 +529,17 @@
           </div>
           <div style="flex:1;">
             <label style="margin-top:0;">Fecha a mostrar</label>
-            <input type="text" id="forcedNoteDateSame" placeholder="Hoy">
+            <select id="forcedNoteDaysAgoSame">
+              <option value="0">Hoy</option>
+              <option value="1">Ayer</option>
+              <option value="2">Hace 2 días</option>
+              <option value="3">Hace 3 días</option>
+              <option value="4">Hace 4 días</option>
+              <option value="5">Hace 5 días</option>
+              <option value="6">Hace 6 días</option>
+              <option value="exact">Fecha exacta…</option>
+            </select>
+            <input type="date" id="forcedNoteExactDateSame" style="display:none; margin-top:6px;">
           </div>
         </div>
         <label>Lista de relleno</label>
@@ -515,7 +555,11 @@
       <label>Nombre de la lista</label>
       <input type="text" id="listName" placeholder="Ej: Cartas Bicycle">
       <label>Elementos (uno por línea)</label>
-      <textarea id="listItems" rows="6" style="width:100%; font-family:'Courier New',monospace; font-size:13px; padding:8px; border:1px solid #ccc; border-radius:8px;"></textarea>
+      <div id="listItemsWrap" style="position:relative; border:1px solid #ccc; border-radius:8px; overflow:hidden;">
+        <div id="listItemsGutter" style="position:absolute; top:0; left:0; bottom:0; width:32px; background:#f3f2ee; border-right:1px solid #ccc; overflow:hidden; font-family:'Courier New',monospace; font-size:13px; line-height:1.4; color:#999; padding:8px 4px 8px 0; text-align:right; box-sizing:border-box; pointer-events:none;"></div>
+        <textarea id="listItems" rows="6" style="width:100%; font-family:'Courier New',monospace; font-size:13px; line-height:1.4; padding:8px 8px 8px 40px; border:none; box-sizing:border-box; display:block; resize:vertical;"></textarea>
+      </div>
+      <div id="listItemsCount" style="font-size:11px; color:#999; margin-top:4px;">0 elementos</div>
       <div class="config-actions">
         <button class="btn-secondary" id="cancelListBtn">Cancelar</button>
         <button class="btn-primary" id="saveListBtn">Guardar lista</button>
@@ -531,7 +575,17 @@
       <label>Título</label>
       <input type="text" id="noteEditTitle" placeholder="Ej: Lista de la compra">
       <label>Fecha a mostrar</label>
-      <input type="text" id="noteEditDate" placeholder="Ej: 3 mar, ayer, 12/04/2024">
+      <select id="noteEditDaysAgo">
+        <option value="0">Hoy</option>
+        <option value="1">Ayer</option>
+        <option value="2">Hace 2 días</option>
+        <option value="3">Hace 3 días</option>
+        <option value="4">Hace 4 días</option>
+        <option value="5">Hace 5 días</option>
+        <option value="6">Hace 6 días</option>
+        <option value="exact">Fecha exacta…</option>
+      </select>
+      <input type="date" id="noteEditExactDate" style="display:none; margin-top:6px;">
       <label>Contenido</label>
       <textarea id="noteEditBody" rows="5" style="width:100%; font-family:'Courier New',monospace; font-size:13px; padding:8px; border:1px solid #ccc; border-radius:8px;"></textarea>
       <div class="config-actions">
@@ -745,16 +799,19 @@ if(!window.storage){
   let forcedItemText = '';
   let selectedList = 'builtin:objetos';
   let forcedNoteTitle = 'Lista';
-  let forcedNoteDate = 'Hoy';
+  let forcedNoteDaysAgo = 0;
+  let forcedNoteExactDate = '';
   let forcedNoteOrder = 0;
   let forcedItemTextA = '', forcedItemTextB = '';
   let selectedListA = 'builtin:objetos', selectedListB = 'builtin:objetos';
   let forcedNoteTitleA = 'Lista A', forcedNoteTitleB = 'Lista B';
-  let forcedNoteDateA = 'Hoy', forcedNoteDateB = 'Hoy';
+  let forcedNoteDaysAgoA = 0, forcedNoteDaysAgoB = 0;
+  let forcedNoteExactDateA = '', forcedNoteExactDateB = '';
   let forcedNoteOrderA = 0, forcedNoteOrderB = 1;
   let forcedItemTextSameA = '', forcedItemTextSameB = '';
   let selectedListSame = 'builtin:objetos';
-  let forcedNoteTitleSame = 'Lista', forcedNoteDateSame = 'Hoy';
+  let forcedNoteTitleSame = 'Lista';
+  let forcedNoteDaysAgoSame = 0, forcedNoteExactDateSame = '';
   let forcedNoteOrderSame = 0;
   let customLists = {}; // nombre -> array de items
   let shotSets = {
@@ -773,7 +830,59 @@ if(!window.storage){
     if(val) digitZones[forceMode][screenIndex] = val;
     else delete digitZones[forceMode][screenIndex];
   }
-  let decoyNotes = []; // {id, title, dateText, body, order}
+  let decoyNotes = []; // {id, title, daysAgo, exactDate, body, order}
+
+  // ---------- fechas (Hoy / Ayer / día de la semana / fecha exacta) ----------
+  function todayISO(){
+    const d = new Date();
+    d.setHours(0,0,0,0);
+    return d.toISOString().slice(0,10);
+  }
+  // Devuelve {key, label}: key = nº de días desde hoy (0 = hoy, mayor = más antiguo),
+  // usado para ordenar; label = texto a mostrar, igual que en Notas real.
+  function dateSortKeyAndLabel(daysAgo, exactDate){
+    if(exactDate){
+      const d = new Date(exactDate + 'T00:00:00');
+      const today = new Date(); today.setHours(0,0,0,0);
+      const diffDays = Math.round((today - d) / 86400000);
+      const label = d.toLocaleDateString('es-ES', {day:'numeric', month:'short'});
+      return { key: diffDays, label };
+    }
+    const n = daysAgo || 0;
+    let label;
+    if(n === 0) label = 'Hoy';
+    else if(n === 1) label = 'Ayer';
+    else {
+      const d = new Date(); d.setDate(d.getDate() - n);
+      label = d.toLocaleDateString('es-ES', {weekday:'long'});
+      label = label.charAt(0).toUpperCase() + label.slice(1);
+    }
+    return { key: n, label };
+  }
+  function wireDateSelect(selectEl, dateEl){
+    selectEl.addEventListener('change', ()=>{
+      dateEl.style.display = selectEl.value === 'exact' ? 'block' : 'none';
+      if(selectEl.value === 'exact' && !dateEl.value) dateEl.value = todayISO();
+    });
+  }
+  function setDateFields(selectEl, dateEl, daysAgo, exactDate){
+    if(exactDate){
+      selectEl.value = 'exact';
+      dateEl.value = exactDate;
+      dateEl.style.display = 'block';
+    } else {
+      selectEl.value = String(daysAgo ?? 0);
+      dateEl.value = '';
+      dateEl.style.display = 'none';
+    }
+  }
+  function readDateFields(selectEl, dateEl){
+    if(selectEl.value === 'exact'){
+      return { daysAgo: null, exactDate: dateEl.value || todayISO() };
+    }
+    return { daysAgo: parseInt(selectEl.value, 10), exactDate: '' };
+  }
+
 
   const BUILTIN_LABELS = {
     objetos: 'Objetos cotidianos', animales: 'Animales', cartas: 'Cartas de baraja',
@@ -847,7 +956,11 @@ if(!window.storage){
           <div class="nm-title">${name}</div>
           <div class="nm-date">${customLists[name].length} elementos</div>
         </div>
-        <div class="nm-actions"><button data-act="del">Borrar</button></div>`;
+        <div class="nm-actions">
+          <button data-act="edit">Editar</button>
+          <button data-act="del">Borrar</button>
+        </div>`;
+      row.querySelector('[data-act=edit]').addEventListener('click', ()=> openListEditor(name));
       row.querySelector('[data-act=del]').addEventListener('click', ()=> deleteCustomList(name));
       wrap.appendChild(row);
     });
@@ -1066,25 +1179,23 @@ if(!window.storage){
   }
 
   function forcedNoteConfig(which){
-    if(which === 'A') return {itemText: forcedItemTextA, pool: currentPool(selectedListA), title: forcedNoteTitleA || 'Lista A', date: forcedNoteDateA || 'Hoy', pairIndex: 0};
-    if(which === 'B') return {itemText: forcedItemTextB, pool: currentPool(selectedListB), title: forcedNoteTitleB || 'Lista B', date: forcedNoteDateB || 'Hoy', pairIndex: 1};
-    return {itemText: forcedItemText, pool: currentPool(selectedList), title: forcedNoteTitle || 'Lista', date: forcedNoteDate || 'Hoy', pairIndex: 0};
+    if(which === 'A') return {itemText: forcedItemTextA, pool: currentPool(selectedListA), title: forcedNoteTitleA || 'Lista A', date: dateSortKeyAndLabel(forcedNoteDaysAgoA, forcedNoteExactDateA).label, pairIndex: 0};
+    if(which === 'B') return {itemText: forcedItemTextB, pool: currentPool(selectedListB), title: forcedNoteTitleB || 'Lista B', date: dateSortKeyAndLabel(forcedNoteDaysAgoB, forcedNoteExactDateB).label, pairIndex: 1};
+    return {itemText: forcedItemText, pool: currentPool(selectedList), title: forcedNoteTitle || 'Lista', date: dateSortKeyAndLabel(forcedNoteDaysAgo, forcedNoteExactDate).label, pairIndex: 0};
   }
 
   function openForcedNote(which){
     if(which === 'same'){ openForcedNoteSame(); return; }
     const cfg = forcedNoteConfig(which);
-    const n = getComputedNumber(cfg.pairIndex) || 1;
-    let fillers = [];
-    while(fillers.length < 99) fillers = fillers.concat(cfg.pool);
-    fillers = fillers.slice(0,99);
+    const total = cfg.pool.length + 1; // los elementos de la lista + 1 para el forzado
+    const n = Math.min(Math.max(getComputedNumber(cfg.pairIndex) || 1, 1), total);
 
     const listEl = document.getElementById('notesList');
     listEl.className = 'n-content-body';
     listEl.innerHTML = '';
     let fi = 0;
-    for(let i=1;i<=100;i++){
-      const text = i===n ? (cfg.itemText || '(elemento forzado)') : fillers[fi++];
+    for(let i=1;i<=total;i++){
+      const text = i===n ? (cfg.itemText || '(elemento forzado)') : cfg.pool[fi++];
       const line = document.createElement('div');
       line.className = 'n-line';
       line.innerHTML = `<span class="n-num">${i}.</span><span class="n-txt">${text}</span>`;
@@ -1095,34 +1206,32 @@ if(!window.storage){
 
   function openForcedNoteSame(){
     const pool = currentPool(selectedListSame);
-    const n1 = getComputedNumber(0) || 1;
-    const n2 = getComputedNumber(1) || 1;
-    let fillers = [];
-    while(fillers.length < 100) fillers = fillers.concat(pool);
-    fillers = fillers.slice(0,100);
+    const total = pool.length + 2; // los elementos de la lista + 2 huecos forzados
+    const n1 = Math.min(Math.max(getComputedNumber(0) || 1, 1), total);
+    const n2 = Math.min(Math.max(getComputedNumber(1) || 1, 1), total);
 
     const listEl = document.getElementById('notesList');
     listEl.className = 'n-content-body';
     listEl.innerHTML = '';
     let fi = 0;
-    for(let i=1;i<=100;i++){
+    for(let i=1;i<=total;i++){
       let text;
       if(i === n1) text = forcedItemTextSameA || '(elemento A)';
       else if(i === n2) text = forcedItemTextSameB || '(elemento B)';
-      else text = fillers[fi++];
+      else text = pool[fi++];
       const line = document.createElement('div');
       line.className = 'n-line';
       line.innerHTML = `<span class="n-num">${i}.</span><span class="n-txt">${text}</span>`;
       listEl.appendChild(line);
     }
-    renderNoteFrame(forcedNoteTitleSame || 'Lista', forcedNoteDateSame || 'Hoy');
+    renderNoteFrame(forcedNoteTitleSame || 'Lista', dateSortKeyAndLabel(forcedNoteDaysAgoSame, forcedNoteExactDateSame).label);
   }
 
   function openDecoyNote(note){
     const listEl = document.getElementById('notesList');
     listEl.className = 'n-line-plain';
     listEl.textContent = note.body;
-    renderNoteFrame(note.title, note.dateText || 'Hoy');
+    renderNoteFrame(note.title, dateSortKeyAndLabel(note.daysAgo, note.exactDate).label);
   }
 
   document.getElementById('notesBack').addEventListener('click', ()=>{
@@ -1183,29 +1292,40 @@ if(!window.storage){
   function allNotesSorted(){
     let forcedEntries;
     if(forceMode === 'double'){
-      const nA = getComputedNumber(0) || 0;
-      const nB = getComputedNumber(1) || 0;
+      const nA = getComputedNumber(0) || 1;
+      const nB = getComputedNumber(1) || 1;
+      const dA = dateSortKeyAndLabel(forcedNoteDaysAgoA, forcedNoteExactDateA);
+      const dB = dateSortKeyAndLabel(forcedNoteDaysAgoB, forcedNoteExactDateB);
       forcedEntries = [
-        { isForced:true, which:'A', order: forcedNoteOrderA, title: forcedNoteTitleA || 'Lista A', dateText: forcedNoteDateA || 'Hoy', preview: previewForPosition1(currentPool(selectedListA), nA, forcedItemTextA) },
-        { isForced:true, which:'B', order: forcedNoteOrderB, title: forcedNoteTitleB || 'Lista B', dateText: forcedNoteDateB || 'Hoy', preview: previewForPosition1(currentPool(selectedListB), nB, forcedItemTextB) }
+        { isForced:true, which:'A', sortKey: dA.key, title: forcedNoteTitleA || 'Lista A', dateText: dA.label, preview: previewForPosition1(currentPool(selectedListA), nA, forcedItemTextA) },
+        { isForced:true, which:'B', sortKey: dB.key, title: forcedNoteTitleB || 'Lista B', dateText: dB.label, preview: previewForPosition1(currentPool(selectedListB), nB, forcedItemTextB) }
       ];
     } else if(forceMode === 'double-same'){
-      const n1 = getComputedNumber(0) || 0;
+      const n1 = getComputedNumber(0) || 1;
       const pool = currentPool(selectedListSame);
       let preview1;
       if(n1 === 1) preview1 = '1. ' + (forcedItemTextSameA || '(elemento forzado)');
       else preview1 = '1. ' + (pool[0] || '(sin definir)');
+      const dSame = dateSortKeyAndLabel(forcedNoteDaysAgoSame, forcedNoteExactDateSame);
       forcedEntries = [
-        { isForced:true, which:'same', order: forcedNoteOrderSame, title: forcedNoteTitleSame || 'Lista', dateText: forcedNoteDateSame || 'Hoy', preview: preview1 }
+        { isForced:true, which:'same', sortKey: dSame.key, title: forcedNoteTitleSame || 'Lista', dateText: dSame.label, preview: preview1 }
       ];
     } else {
-      const n = getComputedNumber(0) || 0;
+      const n = getComputedNumber(0) || 1;
+      const d = dateSortKeyAndLabel(forcedNoteDaysAgo, forcedNoteExactDate);
       forcedEntries = [
-        { isForced:true, which:'single', order: forcedNoteOrder, title: forcedNoteTitle || 'Lista', dateText: forcedNoteDate || 'Hoy', preview: previewForPosition1(currentPool(selectedList), n, forcedItemText) }
+        { isForced:true, which:'single', sortKey: d.key, title: forcedNoteTitle || 'Lista', dateText: d.label, preview: previewForPosition1(currentPool(selectedList), n, forcedItemText) }
       ];
     }
-    const combined = [...forcedEntries, ...decoyNotes];
-    return combined.sort((a,b)=> (a.order ?? 0) - (b.order ?? 0));
+    const decoyWithKeys = decoyNotes.map(note => ({
+      ...note,
+      sortKey: dateSortKeyAndLabel(note.daysAgo, note.exactDate).key,
+      dateText: dateSortKeyAndLabel(note.daysAgo, note.exactDate).label
+    }));
+    const combined = [...forcedEntries, ...decoyWithKeys];
+    // más reciente primero (como en Notas real); a igualdad de fecha, respeta el
+    // orden en que se añadieron (usamos "order" solo como desempate estable)
+    return combined.sort((a,b)=> (a.sortKey - b.sortKey) || ((a.order ?? 0) - (b.order ?? 0)));
   }
 
   function openNotesList(){
@@ -1271,17 +1391,27 @@ if(!window.storage){
   const calibrateWrap = document.getElementById('calibrateWrap');
   const calibrateImg = document.getElementById('calibrateImg');
   const forcedNoteTitleInput = document.getElementById('forcedNoteTitle');
-  const forcedNoteDateInput = document.getElementById('forcedNoteDate');
+  const forcedNoteDaysAgoSelect = document.getElementById('forcedNoteDaysAgo');
+  const forcedNoteExactDateInput = document.getElementById('forcedNoteExactDate');
   const forcedNoteTitleAInput = document.getElementById('forcedNoteTitleA');
   const forcedNoteTitleBInput = document.getElementById('forcedNoteTitleB');
-  const forcedNoteDateAInput = document.getElementById('forcedNoteDateA');
-  const forcedNoteDateBInput = document.getElementById('forcedNoteDateB');
+  const forcedNoteDaysAgoASelect = document.getElementById('forcedNoteDaysAgoA');
+  const forcedNoteExactDateAInput = document.getElementById('forcedNoteExactDateA');
+  const forcedNoteDaysAgoBSelect = document.getElementById('forcedNoteDaysAgoB');
+  const forcedNoteExactDateBInput = document.getElementById('forcedNoteExactDateB');
   const forcedNoteTitleSameInput = document.getElementById('forcedNoteTitleSame');
-  const forcedNoteDateSameInput = document.getElementById('forcedNoteDateSame');
+  const forcedNoteDaysAgoSameSelect = document.getElementById('forcedNoteDaysAgoSame');
+  const forcedNoteExactDateSameInput = document.getElementById('forcedNoteExactDateSame');
+  wireDateSelect(forcedNoteDaysAgoSelect, forcedNoteExactDateInput);
+  wireDateSelect(forcedNoteDaysAgoASelect, forcedNoteExactDateAInput);
+  wireDateSelect(forcedNoteDaysAgoBSelect, forcedNoteExactDateBInput);
+  wireDateSelect(forcedNoteDaysAgoSameSelect, forcedNoteExactDateSameInput);
   const noteManagerList = document.getElementById('noteManagerList');
   const noteEditor = document.getElementById('noteEditor');
   const noteEditTitle = document.getElementById('noteEditTitle');
-  const noteEditDate = document.getElementById('noteEditDate');
+  const noteEditDaysAgoSelect = document.getElementById('noteEditDaysAgo');
+  const noteEditExactDateInput = document.getElementById('noteEditExactDate');
+  wireDateSelect(noteEditDaysAgoSelect, noteEditExactDateInput);
   const noteEditBody = document.getElementById('noteEditBody');
   let editingNoteId = null;
 
@@ -1535,13 +1665,13 @@ if(!window.storage){
     practiceToggle.checked = practiceMode;
     notesDarkToggle.checked = notesDarkMode;
     forcedNoteTitleInput.value = forcedNoteTitle;
-    forcedNoteDateInput.value = forcedNoteDate;
+    setDateFields(forcedNoteDaysAgoSelect, forcedNoteExactDateInput, forcedNoteDaysAgo, forcedNoteExactDate);
     forcedNoteTitleAInput.value = forcedNoteTitleA;
     forcedNoteTitleBInput.value = forcedNoteTitleB;
-    forcedNoteDateAInput.value = forcedNoteDateA;
-    forcedNoteDateBInput.value = forcedNoteDateB;
+    setDateFields(forcedNoteDaysAgoASelect, forcedNoteExactDateAInput, forcedNoteDaysAgoA, forcedNoteExactDateA);
+    setDateFields(forcedNoteDaysAgoBSelect, forcedNoteExactDateBInput, forcedNoteDaysAgoB, forcedNoteExactDateB);
     forcedNoteTitleSameInput.value = forcedNoteTitleSame;
-    forcedNoteDateSameInput.value = forcedNoteDateSame;
+    setDateFields(forcedNoteDaysAgoSameSelect, forcedNoteExactDateSameInput, forcedNoteDaysAgoSame, forcedNoteExactDateSame);
     refreshNoteManagerList();
     noteEditor.style.display = 'none';
     listEditor.style.display = 'none';
@@ -1553,34 +1683,60 @@ if(!window.storage){
   listSelectB.addEventListener('change', ()=>{ selectedListB = listSelectB.value; });
   listSelectSame.addEventListener('change', ()=>{ selectedListSame = listSelectSame.value; });
 
-  document.getElementById('newListBtn').addEventListener('click', ()=>{
-    listNameInput.value = '';
-    listItemsInput.value = '';
-    listEditor.style.display = 'block';
+  const listItemsGutter = document.getElementById('listItemsGutter');
+  const listItemsCount = document.getElementById('listItemsCount');
+
+  function refreshListItemsGutter(){
+    const lines = listItemsInput.value.split('\n');
+    listItemsGutter.innerHTML = lines.map((_, idx) => (idx+1)).join('<br>');
+    const nonEmpty = lines.map(s=>s.trim()).filter(Boolean).length;
+    listItemsCount.textContent = nonEmpty + (nonEmpty === 1 ? ' elemento' : ' elementos');
+  }
+  listItemsInput.addEventListener('input', refreshListItemsGutter);
+  listItemsInput.addEventListener('scroll', ()=>{
+    listItemsGutter.scrollTop = listItemsInput.scrollTop;
   });
 
+  let editingListName = null;
+
+  function openListEditor(name){
+    editingListName = name || null;
+    listNameInput.value = name || '';
+    listNameInput.disabled = !!name; // no permitimos renombrar para no romper referencias existentes
+    listItemsInput.value = name ? customLists[name].join('\n') : '';
+    refreshListItemsGutter();
+    listEditor.style.display = 'block';
+  }
+
+  document.getElementById('newListBtn').addEventListener('click', ()=> openListEditor(null));
+
   document.getElementById('cancelListBtn').addEventListener('click', ()=>{
+    editingListName = null;
+    listNameInput.disabled = false;
     listEditor.style.display = 'none';
   });
 
   document.getElementById('saveListBtn').addEventListener('click', async ()=>{
-    const name = listNameInput.value.trim();
+    const name = editingListName || listNameInput.value.trim();
     const items = listItemsInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
     if(!name || items.length < 2){
       statusMsg.textContent = 'Pon un nombre y al menos 2 elementos.';
       return;
     }
+    const isNew = !editingListName;
     customLists[name] = items;
-    selectedList = 'custom:' + name;
+    if(isNew) selectedList = 'custom:' + name;
     try{
       await window.storage.set('oraculo-list-' + name, JSON.stringify(items), false);
       const names = Array.from(new Set([...(await getListIndex()), name]));
       await window.storage.set('oraculo-list-index', JSON.stringify(names), false);
     }catch(e){ /* se queda solo en esta sesión */ }
+    editingListName = null;
+    listNameInput.disabled = false;
     listEditor.style.display = 'none';
     refreshAllListSelects();
     refreshCustomListsManager();
-    statusMsg.textContent = `Lista "${name}" guardada.`;
+    statusMsg.textContent = isNew ? `Lista "${name}" guardada.` : `Lista "${name}" actualizada.`;
     setTimeout(()=> statusMsg.textContent = '', 1200);
   });
 
@@ -1601,7 +1757,7 @@ if(!window.storage){
         <span class="nm-handle">⠿</span>
         <div class="nm-info">
           <div class="nm-title">${note.title}</div>
-          <div class="nm-date">${note.dateText}</div>
+          <div class="nm-date">${dateSortKeyAndLabel(note.daysAgo, note.exactDate).label}</div>
         </div>
         <div class="nm-actions">
           <button data-act="edit">Editar</button>
@@ -1667,7 +1823,7 @@ if(!window.storage){
   function openNoteEditor(note){
     editingNoteId = note ? note.id : null;
     noteEditTitle.value = note ? note.title : '';
-    noteEditDate.value = note ? note.dateText : '';
+    setDateFields(noteEditDaysAgoSelect, noteEditExactDateInput, note ? note.daysAgo : 0, note ? note.exactDate : '');
     noteEditBody.value = note ? note.body : '';
     noteEditor.style.display = 'block';
   }
@@ -1694,17 +1850,19 @@ if(!window.storage){
       statusMsg.textContent = 'Pon un título y contenido.';
       return;
     }
+    const { daysAgo, exactDate } = readDateFields(noteEditDaysAgoSelect, noteEditExactDateInput);
     if(editingNoteId){
       const note = decoyNotes.find(n=>n.id===editingNoteId);
       note.title = title;
-      note.dateText = noteEditDate.value.trim() || 'Hoy';
+      note.daysAgo = daysAgo;
+      note.exactDate = exactDate;
       note.body = body;
     } else {
-      const maxOrder = decoyNotes.reduce((m,n)=>Math.max(m,n.order??0), Math.max(forcedNoteOrder, forcedNoteOrderA, forcedNoteOrderB, forcedNoteOrderSame));
+      const maxOrder = decoyNotes.reduce((m,n)=>Math.max(m,n.order??0), 0);
       decoyNotes.push({
         id: 'n' + Date.now(),
         title, body,
-        dateText: noteEditDate.value.trim() || 'Hoy',
+        daysAgo, exactDate,
         order: maxOrder + 1
       });
     }
@@ -1731,11 +1889,11 @@ if(!window.storage){
   function gatherFullConfig(){
     return {
       forceMode,
-      forcedItemText, selectedList, forcedNoteTitle, forcedNoteDate,
+      forcedItemText, selectedList, forcedNoteTitle, forcedNoteDaysAgo, forcedNoteExactDate,
       forcedItemTextA, forcedItemTextB, selectedListA, selectedListB,
-      forcedNoteTitleA, forcedNoteTitleB, forcedNoteDateA, forcedNoteDateB,
+      forcedNoteTitleA, forcedNoteTitleB, forcedNoteDaysAgoA, forcedNoteExactDateA, forcedNoteDaysAgoB, forcedNoteExactDateB,
       forcedItemTextSameA, forcedItemTextSameB, selectedListSame,
-      forcedNoteTitleSame, forcedNoteDateSame,
+      forcedNoteTitleSame, forcedNoteDaysAgoSame, forcedNoteExactDateSame,
       notesDarkMode,
       customLists, decoyNotes,
       shotSets, notesHotspots, digitZones
@@ -1745,11 +1903,11 @@ if(!window.storage){
   async function persistFullConfig(){
     try{
       await window.storage.set('oraculo-config', JSON.stringify({
-        forceMode, forcedItemText, selectedList, forcedNoteTitle, forcedNoteDate,
+        forceMode, forcedItemText, selectedList, forcedNoteTitle, forcedNoteDaysAgo, forcedNoteExactDate,
         forcedItemTextA, forcedItemTextB, selectedListA, selectedListB,
-        forcedNoteTitleA, forcedNoteTitleB, forcedNoteDateA, forcedNoteDateB,
+        forcedNoteTitleA, forcedNoteTitleB, forcedNoteDaysAgoA, forcedNoteExactDateA, forcedNoteDaysAgoB, forcedNoteExactDateB,
         forcedItemTextSameA, forcedItemTextSameB, selectedListSame,
-        forcedNoteTitleSame, forcedNoteDateSame, notesDarkMode
+        forcedNoteTitleSame, forcedNoteDaysAgoSame, forcedNoteExactDateSame, notesDarkMode
       }), false);
     }catch(e){}
 
@@ -1794,20 +1952,24 @@ if(!window.storage){
     forcedItemText = cfg.forcedItemText || '';
     selectedList = cfg.selectedList || 'builtin:objetos';
     forcedNoteTitle = cfg.forcedNoteTitle || 'Lista';
-    forcedNoteDate = cfg.forcedNoteDate || 'Hoy';
+    forcedNoteDaysAgo = cfg.forcedNoteDaysAgo ?? 0;
+    forcedNoteExactDate = cfg.forcedNoteExactDate || '';
     forcedItemTextA = cfg.forcedItemTextA || '';
     forcedItemTextB = cfg.forcedItemTextB || '';
     selectedListA = cfg.selectedListA || 'builtin:objetos';
     selectedListB = cfg.selectedListB || 'builtin:objetos';
     forcedNoteTitleA = cfg.forcedNoteTitleA || 'Lista A';
     forcedNoteTitleB = cfg.forcedNoteTitleB || 'Lista B';
-    forcedNoteDateA = cfg.forcedNoteDateA || 'Hoy';
-    forcedNoteDateB = cfg.forcedNoteDateB || 'Hoy';
+    forcedNoteDaysAgoA = cfg.forcedNoteDaysAgoA ?? 0;
+    forcedNoteExactDateA = cfg.forcedNoteExactDateA || '';
+    forcedNoteDaysAgoB = cfg.forcedNoteDaysAgoB ?? 0;
+    forcedNoteExactDateB = cfg.forcedNoteExactDateB || '';
     forcedItemTextSameA = cfg.forcedItemTextSameA || '';
     forcedItemTextSameB = cfg.forcedItemTextSameB || '';
     selectedListSame = cfg.selectedListSame || 'builtin:objetos';
     forcedNoteTitleSame = cfg.forcedNoteTitleSame || 'Lista';
-    forcedNoteDateSame = cfg.forcedNoteDateSame || 'Hoy';
+    forcedNoteDaysAgoSame = cfg.forcedNoteDaysAgoSame ?? 0;
+    forcedNoteExactDateSame = cfg.forcedNoteExactDateSame || '';
     notesDarkMode = !!cfg.notesDarkMode;
     customLists = cfg.customLists || {};
     decoyNotes = cfg.decoyNotes || [];
@@ -1826,11 +1988,11 @@ if(!window.storage){
     forcedItemBInput.value = forcedItemTextB;
     notesDarkToggle.checked = notesDarkMode;
     forcedNoteTitleInput.value = forcedNoteTitle;
-    forcedNoteDateInput.value = forcedNoteDate;
+    setDateFields(forcedNoteDaysAgoSelect, forcedNoteExactDateInput, forcedNoteDaysAgo, forcedNoteExactDate);
     forcedNoteTitleAInput.value = forcedNoteTitleA;
     forcedNoteTitleBInput.value = forcedNoteTitleB;
-    forcedNoteDateAInput.value = forcedNoteDateA;
-    forcedNoteDateBInput.value = forcedNoteDateB;
+    setDateFields(forcedNoteDaysAgoASelect, forcedNoteExactDateAInput, forcedNoteDaysAgoA, forcedNoteExactDateA);
+    setDateFields(forcedNoteDaysAgoBSelect, forcedNoteExactDateBInput, forcedNoteDaysAgoB, forcedNoteExactDateB);
 
     buildHomeScreens();
     refreshAllListSelects();
@@ -1883,17 +2045,17 @@ if(!window.storage){
   document.getElementById('saveConfig').addEventListener('click', async ()=>{
     forcedItemText = forcedItemInput.value.trim();
     forcedNoteTitle = forcedNoteTitleInput.value.trim() || 'Lista';
-    forcedNoteDate = forcedNoteDateInput.value.trim() || 'Hoy';
+    { const r = readDateFields(forcedNoteDaysAgoSelect, forcedNoteExactDateInput); forcedNoteDaysAgo = r.daysAgo; forcedNoteExactDate = r.exactDate; }
     forcedItemTextA = forcedItemAInput.value.trim();
     forcedItemTextB = forcedItemBInput.value.trim();
     forcedNoteTitleA = forcedNoteTitleAInput.value.trim() || 'Lista A';
     forcedNoteTitleB = forcedNoteTitleBInput.value.trim() || 'Lista B';
-    forcedNoteDateA = forcedNoteDateAInput.value.trim() || 'Hoy';
-    forcedNoteDateB = forcedNoteDateBInput.value.trim() || 'Hoy';
+    { const r = readDateFields(forcedNoteDaysAgoASelect, forcedNoteExactDateAInput); forcedNoteDaysAgoA = r.daysAgo; forcedNoteExactDateA = r.exactDate; }
+    { const r = readDateFields(forcedNoteDaysAgoBSelect, forcedNoteExactDateBInput); forcedNoteDaysAgoB = r.daysAgo; forcedNoteExactDateB = r.exactDate; }
     forcedItemTextSameA = forcedItemSameAInput.value.trim();
     forcedItemTextSameB = forcedItemSameBInput.value.trim();
     forcedNoteTitleSame = forcedNoteTitleSameInput.value.trim() || 'Lista';
-    forcedNoteDateSame = forcedNoteDateSameInput.value.trim() || 'Hoy';
+    { const r = readDateFields(forcedNoteDaysAgoSameSelect, forcedNoteExactDateSameInput); forcedNoteDaysAgoSame = r.daysAgo; forcedNoteExactDateSame = r.exactDate; }
     practiceMode = practiceToggle.checked;
     notesDarkMode = notesDarkToggle.checked;
     readout.classList.toggle('on', practiceMode);
@@ -1902,11 +2064,11 @@ if(!window.storage){
 
     try{
       await window.storage.set('oraculo-config', JSON.stringify({
-        forceMode, forcedItemText, selectedList, forcedNoteTitle, forcedNoteDate,
+        forceMode, forcedItemText, selectedList, forcedNoteTitle, forcedNoteDaysAgo, forcedNoteExactDate,
         forcedItemTextA, forcedItemTextB, selectedListA, selectedListB,
-        forcedNoteTitleA, forcedNoteTitleB, forcedNoteDateA, forcedNoteDateB,
+        forcedNoteTitleA, forcedNoteTitleB, forcedNoteDaysAgoA, forcedNoteExactDateA, forcedNoteDaysAgoB, forcedNoteExactDateB,
         forcedItemTextSameA, forcedItemTextSameB, selectedListSame,
-        forcedNoteTitleSame, forcedNoteDateSame,
+        forcedNoteTitleSame, forcedNoteDaysAgoSame, forcedNoteExactDateSame,
         notesDarkMode
       }), false);
       statusMsg.textContent = 'Guardado.';
@@ -1936,20 +2098,24 @@ if(!window.storage){
         forcedItemText = parsed.forcedItemText || '';
         selectedList = parsed.selectedList || 'builtin:objetos';
         forcedNoteTitle = parsed.forcedNoteTitle || 'Lista';
-        forcedNoteDate = parsed.forcedNoteDate || 'Hoy';
+        forcedNoteDaysAgo = parsed.forcedNoteDaysAgo ?? 0;
+        forcedNoteExactDate = parsed.forcedNoteExactDate || '';
         forcedItemTextA = parsed.forcedItemTextA || '';
         forcedItemTextB = parsed.forcedItemTextB || '';
         selectedListA = parsed.selectedListA || 'builtin:objetos';
         selectedListB = parsed.selectedListB || 'builtin:objetos';
         forcedNoteTitleA = parsed.forcedNoteTitleA || 'Lista A';
         forcedNoteTitleB = parsed.forcedNoteTitleB || 'Lista B';
-        forcedNoteDateA = parsed.forcedNoteDateA || 'Hoy';
-        forcedNoteDateB = parsed.forcedNoteDateB || 'Hoy';
+        forcedNoteDaysAgoA = parsed.forcedNoteDaysAgoA ?? 0;
+        forcedNoteExactDateA = parsed.forcedNoteExactDateA || '';
+        forcedNoteDaysAgoB = parsed.forcedNoteDaysAgoB ?? 0;
+        forcedNoteExactDateB = parsed.forcedNoteExactDateB || '';
         forcedItemTextSameA = parsed.forcedItemTextSameA || '';
         forcedItemTextSameB = parsed.forcedItemTextSameB || '';
         selectedListSame = parsed.selectedListSame || 'builtin:objetos';
         forcedNoteTitleSame = parsed.forcedNoteTitleSame || 'Lista';
-        forcedNoteDateSame = parsed.forcedNoteDateSame || 'Hoy';
+        forcedNoteDaysAgoSame = parsed.forcedNoteDaysAgoSame ?? 0;
+        forcedNoteExactDateSame = parsed.forcedNoteExactDateSame || '';
         notesDarkMode = !!parsed.notesDarkMode;
       }
     }catch(e){ /* sin datos guardados aún */ }
