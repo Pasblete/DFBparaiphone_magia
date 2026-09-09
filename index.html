@@ -1281,12 +1281,25 @@ if(!window.storage){
     document.getElementById('notesTitle').removeAttribute('contenteditable');
     document.getElementById('notesList').removeAttribute('contenteditable');
   }
-  function activateEditable(el){
+  function activateEditable(el, evt){
+    // Guardamos primero dónde caería el cursor según el punto tocado (antes de
+    // que contenteditable/focus puedan alterar el layout), y lo aplicamos justo
+    // después de enfocar. Sin esto, Safari coloca el cursor siempre al
+    // principio del texto en vez de en el punto pulsado.
+    let range = null;
+    if(evt && document.caretRangeFromPoint){
+      range = document.caretRangeFromPoint(evt.clientX, evt.clientY);
+    }
     el.setAttribute('contenteditable', 'true');
     el.focus();
+    if(range){
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
   }
-  document.getElementById('notesTitle').addEventListener('click', function(){ activateEditable(this); });
-  document.getElementById('notesList').addEventListener('click', function(){ activateEditable(this); });
+  document.getElementById('notesTitle').addEventListener('click', function(e){ activateEditable(this, e); });
+  document.getElementById('notesList').addEventListener('click', function(e){ activateEditable(this, e); });
   document.getElementById('notesTitle').addEventListener('focus', enterEditMode);
   document.getElementById('notesList').addEventListener('focus', enterEditMode);
   document.getElementById('notesTitle').addEventListener('blur', ()=>{
