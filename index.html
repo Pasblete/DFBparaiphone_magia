@@ -1088,23 +1088,34 @@ if(!window.storage){
     }
   }
 
+  let startScreenX = null, startScreenY = null;
   appEl.addEventListener('touchstart', (e)=>{
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
+    // screenX/screenY son coordenadas de pantalla física: a diferencia de
+    // clientX/clientY, no cambian si el teclado se abre a mitad de gesto y
+    // reajusta el viewport. Las usamos solo para medir si el dedo se movió,
+    // sin tocar startX/startY (que siguen haciendo falta tal cual para
+    // calcular la zona/dígito tocado).
+    startScreenX = e.touches[0].screenX;
+    startScreenY = e.touches[0].screenY;
     pageBeforeGesture = currentPage;
     // solo hace falta calcular una zona/dígito si el gesto puede acabar siendo un swipe hacia delante
     startZone = (currentPage < notesPageIndex) ? digitFromTouch(currentPage + 1, startX, startY) : null;
   }, {passive:true});
 
   appEl.addEventListener('touchend', (e)=>{
-    const endX = e.changedTouches[0].clientX;
-    const endY = e.changedTouches[0].clientY;
-    const dx = endX - startX, dy = endY - startY;
+    const endScreenX = e.changedTouches[0].screenX;
+    const endScreenY = e.changedTouches[0].screenY;
+    const dxScreen = endScreenX - startScreenX, dyScreen = endScreenY - startScreenY;
     // un dedo real casi nunca se queda perfectamente quieto: tratamos cualquier
     // movimiento pequeño como "toque simple", para no perder el clic nativo del
-    // icono/zona tocada ni el conteo de toques del reinicio rápido.
-    if(Math.abs(dx) <= 14 && Math.abs(dy) <= 14){
-      registerTapForQuickReset();
+    // icono/zona tocada ni el conteo de toques del reinicio rápido. Usamos las
+    // coordenadas de pantalla física (screenX/Y) para esto, no las de viewport
+    // (clientX/Y): si el teclado se abre a mitad del toque, clientX/Y puede
+    // saltar por el reajuste de la página aunque el dedo no se haya movido.
+    if(Math.abs(dxScreen) <= 14 && Math.abs(dyScreen) <= 14){
+      registerTapForQuickReset(e);
     }
   });
 
@@ -1133,17 +1144,29 @@ if(!window.storage){
   }, {passive:true});
 
   let quickResetTaps = [];
-  function registerTapForQuickReset(){
+  function registerTapForQuickReset(e){
     const now = Date.now();
     quickResetTaps = quickResetTaps.filter(t => now - t < 600);
     quickResetTaps.push(now);
     if(quickResetTaps.length >= 3){
       quickResetTaps = [];
+      // Este touchend es síncrono y quickReset() ya cierra el teclado (blur).
+      // Pero el click sintético de este mismo toque llega justo después y,
+      // si cayó sobre la nota, volvería a activar la edición y reabrir el
+      // teclado. Lo cancelamos aquí para que no llegue a dispararse.
+      if(e && e.cancelable) e.preventDefault();
       quickReset();
+      return true;
     }
+    return false;
   }
 
   function quickReset(){
+    // Si había una nota en edición (teclado abierto), la desenfocamos primero
+    // — igual que hace el botón "atrás" de la nota — para que el reinicio
+    // también cierre el teclado, no solo la pantalla.
+    document.getElementById('notesTitle').blur();
+    document.getElementById('notesList').blur();
     document.getElementById('notesScreen').classList.remove('open');
     document.getElementById('notesListScreen').classList.remove('open');
     digits = [];
@@ -1283,31 +1306,20 @@ if(!window.storage){
   }
   function activateEditable(el, evt){
     el.setAttribute('contenteditable', 'true');
-    // Forzamos que el navegador aplique ya el cambio de estilo ligado a
-    // [contenteditable] (user-select:text) antes de medir el punto tocado.
-    void el.offsetHeight;
     let range = null;
     if(evt && document.caretRangeFromPoint){
       range = document.caretRangeFromPoint(evt.clientX, evt.clientY);
     }
-    function applyRange(){
-      if(!range) return;
+    if(range){
       const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
     }
-    // CLAVE: fijamos la posición del cursor ANTES de enfocar, no después.
-    // En los intentos anteriores llamábamos a focus() primero — y en iOS,
-    // si enfocas un contenteditable que todavía no tiene ninguna selección
-    // dentro, el sistema decide la posición por su cuenta (el principio).
-    // Si la selección ya existe antes de focus(), iOS normalmente la
-    // respeta en vez de sobreescribirla.
-    applyRange();
+    // El cursor se fija ANTES de enfocar (eso es lo que arregló la posición
+    // del cursor). Todo esto tiene que ser síncrono dentro del propio evento
+    // de toque: iOS solo abre el teclado si focus() ocurre así — llamarlo
+    // con retraso (setTimeout) hace que no aparezca el teclado.
     el.focus();
-    // Refuerzo por si algún dispositivo la reafirma igualmente al enganchar
-    // el teclado.
-    requestAnimationFrame(applyRange);
-    setTimeout(applyRange, 50);
   }
   document.getElementById('notesTitle').addEventListener('click', function(e){ activateEditable(this, e); });
   document.getElementById('notesList').addEventListener('click', function(e){ activateEditable(this, e); });
