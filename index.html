@@ -1282,21 +1282,32 @@ if(!window.storage){
     document.getElementById('notesList').removeAttribute('contenteditable');
   }
   function activateEditable(el, evt){
-    // Guardamos primero dónde caería el cursor según el punto tocado (antes de
-    // que contenteditable/focus puedan alterar el layout), y lo aplicamos justo
-    // después de enfocar. Sin esto, Safari coloca el cursor siempre al
-    // principio del texto en vez de en el punto pulsado.
+    el.setAttribute('contenteditable', 'true');
+    // Forzamos que el navegador aplique ya el cambio de estilo ligado a
+    // [contenteditable] (user-select:text) antes de medir el punto tocado.
+    void el.offsetHeight;
     let range = null;
     if(evt && document.caretRangeFromPoint){
       range = document.caretRangeFromPoint(evt.clientX, evt.clientY);
     }
-    el.setAttribute('contenteditable', 'true');
-    el.focus();
-    if(range){
+    function applyRange(){
+      if(!range) return;
       const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
     }
+    // CLAVE: fijamos la posición del cursor ANTES de enfocar, no después.
+    // En los intentos anteriores llamábamos a focus() primero — y en iOS,
+    // si enfocas un contenteditable que todavía no tiene ninguna selección
+    // dentro, el sistema decide la posición por su cuenta (el principio).
+    // Si la selección ya existe antes de focus(), iOS normalmente la
+    // respeta en vez de sobreescribirla.
+    applyRange();
+    el.focus();
+    // Refuerzo por si algún dispositivo la reafirma igualmente al enganchar
+    // el teclado.
+    requestAnimationFrame(applyRange);
+    setTimeout(applyRange, 50);
   }
   document.getElementById('notesTitle').addEventListener('click', function(e){ activateEditable(this, e); });
   document.getElementById('notesList').addEventListener('click', function(e){ activateEditable(this, e); });
