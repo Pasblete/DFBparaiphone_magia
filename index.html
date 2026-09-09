@@ -1065,6 +1065,23 @@ if(!window.storage){
   let pageBeforeGesture = 0;
   const appEl = document.getElementById('app');
 
+  // Bloquea el zoom nativo por doble-tap de iOS Safari: aunque el viewport
+  // lleva user-scalable=no, WebKit igual reconoce el gesto de doble toque y
+  // hace zoom sobre el elemento tocado (deja una franja negra abajo). Esto
+  // pasa tanto con un doble toque suelto como con los dos primeros toques
+  // del triple toque de reinicio. No se aplica dentro de campos editables,
+  // para no romper el doble toque nativo de "seleccionar palabra" al editar
+  // notas/títulos en el gestor.
+  let lastQuickTapEnd = 0;
+  document.addEventListener('touchend', function(e){
+    if(e.target.closest && e.target.closest('input, textarea, [contenteditable]')) return;
+    const now = Date.now();
+    if(now - lastQuickTapEnd <= 350){
+      e.preventDefault();
+    }
+    lastQuickTapEnd = now;
+  }, {passive:false});
+
   function updateReadout(){
     if(practiceMode){
       readout.textContent = 'Dígitos: ' + digits.map(d => (d===null || d===undefined) ? '–' : d).join(' · ');
