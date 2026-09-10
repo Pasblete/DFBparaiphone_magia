@@ -1144,9 +1144,25 @@ if(!window.storage){
   }, {passive:true});
 
   let quickResetTaps = [];
+  let lastNoteScrollAt = 0;
+  const noteBodyEl = document.querySelector('.n-body');
+  if(noteBodyEl){
+    // Solo para saber si hubo scroll hace poco (no tocamos el scroll en sí,
+    // eso rompía el scroll real que necesita el espectador para llegar a su
+    // palabra). iOS a veces se "traga" el primer toque siguiente a un scroll
+    // con inercia — no hay forma limpia de evitarlo sin tocar el scroll, así
+    // que en vez de pelear con eso, damos más margen de tiempo para
+    // completar el triple toque justo en ese caso.
+    noteBodyEl.addEventListener('scroll', ()=>{ lastNoteScrollAt = Date.now(); }, {passive:true});
+  }
   function registerTapForQuickReset(e){
     const now = Date.now();
-    quickResetTaps = quickResetTaps.filter(t => now - t < 600);
+    // Ventana normal: 600ms (estricta, para que un triple toque no salga
+    // nunca por accidente durante el número). Justo después de un scroll en
+    // la nota, la ampliamos: es cuando algún toque se puede perder por el
+    // motivo de arriba, y así un par de toques de más lo completan igual.
+    const windowMs = (now - lastNoteScrollAt < 4000) ? 2500 : 600;
+    quickResetTaps = quickResetTaps.filter(t => now - t < windowMs);
     quickResetTaps.push(now);
     if(quickResetTaps.length >= 3){
       quickResetTaps = [];
@@ -1160,6 +1176,7 @@ if(!window.storage){
     }
     return false;
   }
+
 
   function quickReset(){
     // Si había una nota en edición (teclado abierto), la desenfocamos primero
