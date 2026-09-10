@@ -1088,39 +1088,8 @@ if(!window.storage){
     }
   }
 
-  let scrollSettleTimer = null;
-  function commitPendingPageTransition(){
-    const newPage = Math.max(0, Math.min(totalScreens-1, Math.round(screensEl.scrollLeft / window.innerWidth)));
-    if(newPage !== pageBeforeGesture){
-      if(newPage > pageBeforeGesture && pageBeforeGesture < notesPageIndex){
-        // swipe hacia delante: usar el dígito capturado al empezar el gesto
-        digits[pageBeforeGesture] = startZone;
-        vibrate(15);
-      } else if(newPage < pageBeforeGesture && pageBeforeGesture > 0){
-        // swipe hacia atrás: "olvida" el dígito de la pantalla que se abandona
-        digits[newPage] = null;
-        vibrate(10);
-      }
-      updateReadout();
-    }
-    currentPage = newPage;
-    pageBeforeGesture = newPage;
-    dots.forEach((d,i)=> d.classList.toggle('active', i===newPage));
-    renderPracticeOverlay();
-  }
-
   let startScreenX = null, startScreenY = null;
   appEl.addEventListener('touchstart', (e)=>{
-    // Si el swipe anterior todavía no se había "asentado" (el temporizador
-    // de más abajo no había llegado a disparar porque este toque llegó muy
-    // seguido del anterior), lo confirmamos aquí y ahora mismo, con la
-    // posición de scroll real en este instante — así no se pierde el dígito
-    // de un swipe rápido seguido de otro. Antes esto dependía solo del
-    // temporizador de 120ms, y si dos swipes llegaban más rápido que eso, el
-    // segundo dígito nunca llegaba a guardarse.
-    clearTimeout(scrollSettleTimer);
-    commitPendingPageTransition();
-
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     // screenX/screenY son coordenadas de pantalla física: a diferencia de
@@ -1150,9 +1119,28 @@ if(!window.storage){
     }
   });
 
+  let scrollSettleTimer = null;
   screensEl.addEventListener('scroll', ()=>{
     clearTimeout(scrollSettleTimer);
-    scrollSettleTimer = setTimeout(commitPendingPageTransition, 120);
+    scrollSettleTimer = setTimeout(()=>{
+      const newPage = Math.max(0, Math.min(totalScreens-1, Math.round(screensEl.scrollLeft / window.innerWidth)));
+      if(newPage !== pageBeforeGesture){
+        if(newPage > pageBeforeGesture && pageBeforeGesture < notesPageIndex){
+          // swipe hacia delante: usar el dígito capturado al empezar el gesto
+          digits[pageBeforeGesture] = startZone;
+          vibrate(15);
+        } else if(newPage < pageBeforeGesture && pageBeforeGesture > 0){
+          // swipe hacia atrás: "olvida" el dígito de la pantalla que se abandona
+          digits[newPage] = null;
+          vibrate(10);
+        }
+        updateReadout();
+      }
+      currentPage = newPage;
+      pageBeforeGesture = newPage;
+      dots.forEach((d,i)=> d.classList.toggle('active', i===newPage));
+      renderPracticeOverlay();
+    }, 120);
   }, {passive:true});
 
   let quickResetTaps = [];
